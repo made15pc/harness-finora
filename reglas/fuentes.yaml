@@ -14,6 +14,7 @@ transacciones:
     amount:
       tipo: decimal
       multiplicador: 10000        # monto real = amount × 10.000
+      nota: "En las tablas del harness, amount ya está en monto real (× 10.000). Mismo nombre que el CSV, distinta escala."
 
 gasto_sm:
   archivo: datos/originales/SM_spend.csv 
