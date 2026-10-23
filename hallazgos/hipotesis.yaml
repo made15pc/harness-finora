@@ -1,0 +1,12 @@
+# Esquema de cada hipótesis:
+# - id: P01-H1              # pregunta + número
+#   pregunta: P01
+#   hipotesis: texto en lenguaje de negocio
+#   origen: caso | analista | revisor
+#   si_es_cierta: qué observaríamos en los datos
+#   prueba: métrica(s) de definiciones.yaml o dato requerido
+#   veredicto: pendiente | apoyada | descartada | no_concluyente | no_evaluable
+#   evidencia: [ids de hallazgos.yaml]
+#   dato_faltante: qué dato permitiría evaluarla (obligatorio si no_evaluable)
+#   estado: borrador | aprobado
+hipotesis: []

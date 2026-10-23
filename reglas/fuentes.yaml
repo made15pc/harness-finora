@@ -1,0 +1,53 @@
+# Cómo leer cada CSV de datos/originales/ (solo lectura).
+# Las conversiones aquí descritas se aplican únicamente en sql/1_limpieza.sql.
+
+transacciones:
+  archivo: datos/originales/Transactions.csv
+  codificacion: utf-8-sig        # trae BOM
+  columnas:
+    ID:
+      tipo: entero
+    month:
+      tipo: texto
+      formato: "M/D/YYYY"         # último día del mes, ej. 1/31/2022
+      convertir_a: periodo        # YYYY-MM
+    amount:
+      tipo: decimal
+      multiplicador: 10000        # monto real = amount × 10.000
+
+gasto_sm:
+  archivo: datos/originales/SM_spend.csv 
+  codificacion: utf-8-sig        # trae BOM
+  columnas:
+    Month:
+      tipo: texto
+      formato: "YYYY-MM"
+  columnas_gasto:
+    - PaidMedia
+    - Travel
+    - PublicidadNoWeb
+    - Freelance
+    - SoftwareTools
+    - Team
+    - PayrollExpenses
+  formato_gasto:
+    tipo: texto
+    quitar: "$"
+    separador_decimal: "."        # "$1.040" = 1,04 ; "-$0.016" = -0,016
+    multiplicador: 100000000      # monto real = valor × 100.000.000
+  negativos:
+    columnas: [PayrollExpenses]
+    accion: conservar_y_marcar
+
+industrias:
+  archivo: datos/originales/Industry.csv
+  codificacion: utf-8-sig        # trae BOM
+  columnas:
+    ID:
+      tipo: texto
+      formato: "Cliente N"
+      convertir_a: entero         # extraer N
+    Industria:
+      tipo: texto
+  filas_vacias:
+    accion: descartar_y_reportar
