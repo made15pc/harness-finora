@@ -1,0 +1,324 @@
+# Glosario de métricas de Finora.
+# Toda métrica usada en sql/ y hallazgos/ sale de este archivo.
+# Las definiciones con estado "diseño" NO se usan en SQL: les falta el dato que las sostiene.
+#
+# Campos de cada definición:
+#   nombre, bloque, estado (operativa | diseño), regla, motivo,
+#   dato_faltante (solo si estado = diseño), supuesto (solo si aplica),
+#   advertencia (solo si aplica), aprobada_por, fecha
+
+definiciones:
+
+  # ── BLOQUE A — Ciclo de vida del cliente ─────────────────────────────
+
+  - nombre: antes_de_alta
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Meses anteriores al primer pago de un cliente. No cuentan para MRR, churn ni pausa."
+    motivo: "Transactions trae todos los clientes en todos los meses; los ceros previos al primer pago no son pérdida ni pausa."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: base_inicial
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Cliente cuyo primer pago es en 2022-01 o 2022-02. Cuenta en MRR y queda excluido de las cohortes de adquisición."
+    motivo: "Los datos empiezan en 2022-01. Febrero tiene 108 primeros pagos frente a unos 30 típicos, lo que es coherente con clientes existentes que no pagaron en enero."
+    supuesto: "Marzo 2022 puede incluir clientes preexistentes que no pagaron en enero ni febrero; se acepta como sesgo menor en la primera cohorte."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: cliente_nuevo
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Primer mes con pago > 0, solo si ese mes es >= 2022-03."
+    motivo: "Separa la adquisición real de la base que ya existía al inicio de los datos (ver base_inicial)."
+    advertencia: "Es el primer pago, no el 'Won' del CRM."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: activo
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Cliente que paga este mes y pagó el mes anterior."
+    motivo: "Base para comparar montos mes a mes (expansión y contracción)."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: pausa
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Hueco de 1 o 2 meses consecutivos en 0, tras el cual el cliente vuelve a pagar."
+    motivo: "El 70,5% de los huecos tras los cuales el cliente vuelve a pagar dura exactamente 1 mes, patrón coherente con pagos atrasados o fallidos más que con pérdida del cliente."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: retorno_pausa
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Primer pago después de una pausa."
+    motivo: "Permite explicar en el puente de MRR el ingreso que vuelve tras una pausa."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: churn
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Hueco de 3 o más meses consecutivos en 0. Se fecha en el PRIMER mes en 0."
+    motivo: "Decisión de negocio, no un hecho de los datos: de 468 huecos tras los cuales el cliente vuelve a pagar, el 83,8% dura 1 o 2 meses. Con 3 meses, la mayoría de las interrupciones cortas no se cuenta como pérdida. Fecharlo en el primer mes en 0 ubica la pérdida de MRR cuando ocurre."
+    supuesto: "El umbral de 3 meses es una convención; su efecto se mide con churn_sensibilidad_1m."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: inactivo
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Meses siguientes al primer mes de un hueco de churn."
+    motivo: "Evita contar el mismo churn más de una vez."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: reactivacion
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Primer pago después de un churn."
+    motivo: "Separa el ingreso recuperado del ingreso de clientes nuevos."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: pendiente
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Hueco abierto al final de los datos con menos de 3 meses en 0. Aún no se puede clasificar."
+    motivo: "No se puede saber todavía si es pausa o churn; no se fuerza la clasificación."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: churn_sensibilidad_1m
+    bloque: A_ciclo_de_vida
+    estado: operativa
+    regla: "Alternativa en la que cualquier mes en 0 después de pagar es churn (sin pausa ni pendiente). Solo para comparar."
+    motivo: "Mide cuánto depende el churn de la regla de 3 meses."
+    advertencia: "No reemplaza a churn; solo se usa como análisis de sensibilidad."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  # ── BLOQUE B — MRR ───────────────────────────────────────────────────
+
+  - nombre: mrr
+    bloque: B_mrr
+    estado: operativa
+    regla: "Suma de los montos reales del mes de los clientes con pago > 0."
+    motivo: "Ingreso recurrente mensual; base del puente de MRR."
+    advertencia: "Es el MRR neto cobrado; no hay precio de lista en los datos."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: expansion
+    bloque: B_mrr
+    estado: operativa
+    regla: "Para un cliente activo cuyo monto sube frente al mes anterior: la diferencia."
+    motivo: "Componente de crecimiento del puente de MRR que viene de clientes existentes."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: contraccion
+    bloque: B_mrr
+    estado: operativa
+    regla: "Para un cliente activo cuyo monto baja frente al mes anterior sin llegar a 0: la diferencia."
+    motivo: "Componente de pérdida del puente de MRR que viene de clientes que siguen pagando."
+    advertencia: "Con los datos actuales incluye descuentos, porque no se pueden separar."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  # ── BLOQUE C — Descuentos (diseño) ───────────────────────────────────
+
+  - nombre: mrr_contratado
+    bloque: C_descuentos
+    estado: diseño
+    regla: "Precio de lista del plan vigente."
+    motivo: "Permite separar el precio del plan de lo que efectivamente se cobra."
+    dato_faltante: "Precio de lista o plan por cliente-mes, y registro de descuentos con fecha de inicio y fin."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: descuento
+    bloque: C_descuentos
+    estado: diseño
+    regla: "mrr_contratado − mrr_neto cobrado."
+    motivo: "Cuantifica cuánto se deja de cobrar respecto al precio de lista."
+    dato_faltante: "Precio de lista o plan por cliente-mes, y registro de descuentos con fecha de inicio y fin."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: mrr_neto
+    bloque: C_descuentos
+    estado: diseño
+    regla: "Lo efectivamente cobrado."
+    motivo: "Contraparte de mrr_contratado en el modelo de descuentos."
+    dato_faltante: "Precio de lista o plan por cliente-mes, y registro de descuentos con fecha de inicio y fin."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: descuento_expirado
+    bloque: C_descuentos
+    estado: diseño
+    regla: "Aumento del cobro porque termina un descuento. NO es expansión."
+    motivo: "Evita inflar la expansión con aumentos que no son ventas adicionales."
+    dato_faltante: "Precio de lista o plan por cliente-mes, y registro de descuentos con fecha de inicio y fin."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: revenue_no_capturado
+    bloque: C_descuentos
+    estado: diseño
+    regla: "Suma de descuentos del período."
+    motivo: "Mide el costo total de los descuentos en el período."
+    dato_faltante: "Precio de lista o plan por cliente-mes, y registro de descuentos con fecha de inicio y fin."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  # ── BLOQUE D — Eficiencia comercial ──────────────────────────────────
+
+  - nombre: gasto_sm
+    bloque: D_eficiencia_comercial
+    estado: operativa
+    regla: "Suma de todas las columnas de S&M del mes."
+    motivo: "Gasto total de ventas y marketing, base del CAC."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: cac
+    bloque: D_eficiencia_comercial
+    estado: operativa
+    regla: "gasto_sm del mes / clientes nuevos del mes."
+    motivo: "Mide cuánto gasto comercial cuesta cada cliente nuevo; permite contrastar si más gasto se traduce en más clientes."
+    advertencia: "Incluye clientes self-serve que no consumieron gasto de ventas."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: cac_3m
+    bloque: D_eficiencia_comercial
+    estado: operativa
+    regla: "Suma de gasto_sm de 3 meses / suma de clientes nuevos de esos 3 meses."
+    motivo: "El gasto mensual tiene negativos (reversos) y oscila; la versión móvil es la que se usa para leer tendencias."
+    advertencia: "Incluye clientes self-serve que no consumieron gasto de ventas; mismo sesgo que cac."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: ticket_inicial
+    bloque: D_eficiencia_comercial
+    estado: operativa
+    regla: "Monto del primer mes de un cliente nuevo."
+    motivo: "Mide el valor con el que entra cada cohorte de adquisición."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: retencion_cohorte
+    bloque: D_eficiencia_comercial
+    estado: operativa
+    regla: >-
+      % de clientes de una cohorte de adquisición que NO tuvieron ningún churn
+      entre su mes de alta y el mes N (N = 3, 6 y 12 meses después del alta).
+      Una pausa no cuenta como churn. Un cliente que tuvo churn y luego se
+      reactivó NO cuenta como retenido. Solo se calcula si el mes N es <= 2024-08
+      (último mes en que el churn de 3 meses se puede confirmar); si no, queda
+      vacío, no en 0.
+    motivo: "Mide si perdimos al cliente en sus primeros meses (calidad de la cohorte); la foto mensual ya está en el puente de MRR."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  # ── BLOQUE E — Funnel comercial (diseño) ─────────────────────────────
+
+  - nombre: lead
+    bloque: E_funnel_comercial
+    estado: diseño
+    regla: "Registro que entra al funnel en cualquier etapa."
+    motivo: "Unidad básica del funnel comercial."
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: etapas
+    bloque: E_funnel_comercial
+    estado: diseño
+    regla: "New, Working, Engaged (SDR); SQL, Demo, Proposal (AE); Won (cierre)."
+    motivo: "Ordena el recorrido del lead y asigna responsable por tramo."
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    advertencia: "Criterio exacto de cada etapa: a confirmar con Sales."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: motion_entrada
+    bloque: E_funnel_comercial
+    estado: diseño
+    regla: "self_serve (paga sin ventas), directo_sql (entra en SQL o después), sdr_completo (entra en New, Working o Engaged)."
+    motivo: "Separa los caminos de entrada que consumen distinto gasto comercial."
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: alcanzo_etapa
+    bloque: E_funnel_comercial
+    estado: diseño
+    regla: "Indicador por lead de si llegó a cada etapa, aunque se haya saltado las anteriores."
+    motivo: "Permite medir conversión por etapa sin perder a los leads que saltan etapas."
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: conversion_cohorte
+    bloque: E_funnel_comercial
+    estado: diseño
+    regla: "% de leads que entraron en el mes X y llegaron a Won dentro de 90 días."
+    motivo: "Mide la conversión por cohorte de entrada con una ventana fija y comparable."
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    supuesto: "Ventana de 90 días: a validar con Sales según el ciclo de venta real."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: tiempo_en_etapa
+    bloque: E_funnel_comercial
+    estado: diseño
+    regla: "Días entre entrar y salir de una etapa."
+    motivo: "Identifica dónde se demora el funnel."
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: estancado
+    bloque: E_funnel_comercial
+    estado: diseño
+    regla: "Lead que supera el percentil 90 histórico de tiempo en su etapa actual."
+    motivo: "Señala leads que requieren acción antes de perderse."
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    supuesto: "Umbral en el percentil 90: a validar con Sales según el ciclo de venta real."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: speed_to_lead
+    bloque: E_funnel_comercial
+    estado: diseño
+    regla: "Horas entre la creación del lead y el primer contacto."
+    motivo: "Mide la rapidez de respuesta comercial."
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: win_rate
+    bloque: E_funnel_comercial
+    estado: diseño
+    regla: "Won / SQL, por cohorte de SQL."
+    motivo: "Mide la efectividad de cierre del tramo AE."
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
+
+  - nombre: costo_por_won
+    bloque: E_funnel_comercial
+    estado: diseño
+    regla: "gasto_sm / leads Won."
+    motivo: "Versión del CAC basada en cierres del CRM en lugar de primeros pagos."
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-23
