@@ -67,8 +67,9 @@ definiciones:
     regla: "Hueco de 3 o más meses consecutivos en 0. Se fecha en el PRIMER mes en 0."
     motivo: "Decisión de negocio, no un hecho de los datos: de 468 huecos tras los cuales el cliente vuelve a pagar, el 83,8% dura 1 o 2 meses. Con 3 meses, la mayoría de las interrupciones cortas no se cuenta como pérdida. Fecharlo en el primer mes en 0 ubica la pérdida de MRR cuando ocurre."
     supuesto: "El umbral de 3 meses es una convención; su efecto se mide con churn_sensibilidad_1m."
+    advertencia: "Algunos huecos de 3+ meses terminan con un pago que cubre los meses adeudados; el churn puede incluir pagadores tardíos."
     aprobada_por: "Madeley"
-    fecha: 2026-10-23
+    fecha: 2026-10-24
 
   - nombre: inactivo
     bloque: A_ciclo_de_vida
@@ -108,11 +109,11 @@ definiciones:
   - nombre: mrr
     bloque: B_mrr
     estado: operativa
-    regla: "Suma de los montos reales del mes de los clientes con pago > 0."
+    regla: "Suma de monto_recurrente (no de amount) del mes de los clientes con pago > 0."
     motivo: "Ingreso recurrente mensual; base del puente de MRR."
     advertencia: "Es el MRR neto cobrado; no hay precio de lista en los datos."
     aprobada_por: "Madeley"
-    fecha: 2026-10-23
+    fecha: 2026-10-24
 
   - nombre: expansion
     bloque: B_mrr
@@ -130,6 +131,33 @@ definiciones:
     advertencia: "Con los datos actuales incluye descuentos, porque no se pueden separar."
     aprobada_por: "Madeley"
     fecha: 2026-10-23
+
+  - nombre: monto_recurrente
+    bloque: B_mrr
+    estado: operativa
+    regla: >-
+      En meses con estado nuevo, base_inicial, retorno_pausa o reactivado, si amount
+      es múltiplo entero k >= 2 del amount del mes siguiente (mes siguiente > 0,
+      tolerancia de 0,01 sobre el monto: |amount − k × siguiente| <= 0,01),
+      monto_recurrente = amount del mes siguiente. En cualquier otro caso,
+      monto_recurrente = amount.
+    motivo: >-
+      En 293 meses de entrada o vuelta el amount es un múltiplo exacto (k >= 2) del
+      mes siguiente: 51 base_inicial, 88 nuevo, 140 retorno_pausa (116 tras un hueco
+      de 1 mes y 24 tras uno de 2) y 14 reactivado. Ese exceso suma el 1,43% del
+      amount total; sin separarlo inflaría MRR, ticket_inicial y la contracción del
+      mes siguiente.
+    advertencia: "Un aumento real de plan que coincida exactamente con un múltiplo se clasificaría como cobro extra."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-24
+
+  - nombre: cobro_extra
+    bloque: B_mrr
+    estado: operativa
+    regla: "amount − monto_recurrente."
+    motivo: "Pagos atrasados acumulados o prepagos; no es ingreso recurrente."
+    aprobada_por: "Madeley"
+    fecha: 2026-10-24
 
   # ── BLOQUE C — Descuentos (diseño) ───────────────────────────────────
 
@@ -209,10 +237,10 @@ definiciones:
   - nombre: ticket_inicial
     bloque: D_eficiencia_comercial
     estado: operativa
-    regla: "Monto del primer mes de un cliente nuevo."
+    regla: "monto_recurrente del primer mes de un cliente nuevo."
     motivo: "Mide el valor con el que entra cada cohorte de adquisición."
     aprobada_por: "Madeley"
-    fecha: 2026-10-23
+    fecha: 2026-10-24
 
   - nombre: retencion_cohorte
     bloque: D_eficiencia_comercial
