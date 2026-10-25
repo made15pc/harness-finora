@@ -318,3 +318,45 @@ hallazgos:
     consulta: "select avg(clientes_nuevos) from adquisicion_mes where month like '2024-%'"
     valor: 55.40
     estado: borrador
+
+  - id: H34
+    pregunta: P01
+    afirmacion: "El promedio mensual de clientes nuevos varía {valor}% desde 2023-06 frente a antes (2022-03 a 2023-05)."
+    tipo: hecho
+    consulta: "select 100 * (avg(clientes_nuevos) filter (where periodo = 'despues') / avg(clientes_nuevos) filter (where periodo = 'antes') - 1) from adquisicion_mes"
+    valor: 73.28
+    estado: borrador
+
+  - id: H35
+    pregunta: P01
+    afirmacion: "El promedio mensual de la suma de ticket_inicial varía {valor}% desde 2023-06 frente a antes."
+    tipo: hecho
+    consulta: "select 100 * (avg(ticket_inicial_total) filter (where periodo = 'despues') / avg(ticket_inicial_total) filter (where periodo = 'antes') - 1) from adquisicion_mes"
+    valor: 2.58
+    estado: borrador
+
+  - id: H36
+    pregunta: P01
+    afirmacion: "El gasto_sm mensual promedio varía {valor}% desde 2023-06 frente a antes."
+    tipo: hecho
+    consulta: "select 100 * (avg(gasto_sm) filter (where periodo = 'despues') / avg(gasto_sm) filter (where periodo = 'antes') - 1) from adquisicion_mes"
+    valor: -39.82
+    estado: borrador
+
+  - id: H37
+    pregunta: P01
+    afirmacion: "La mediana de ticket_inicial de los clientes nuevos varía {valor}% desde 2023-06 frente a antes."
+    tipo: hecho
+    consulta: "select 100 * (median(monto_recurrente) filter (where month >= '2023-06') / median(monto_recurrente) filter (where month < '2023-06') - 1) from cliente_mes where estado = 'nuevo'"
+    valor: -12.50
+    estado: borrador
+
+  - id: H38
+    pregunta: P01
+    afirmacion: >-
+      La adquisición creció en cantidad y retiene mejor con menos gasto, pero el valor que entra
+      casi no crece porque el ticket cae dentro de casi todas las industrias; esto es coherente con
+      descuentos o planes de entrada más baratos, que no se pueden medir sin precio de lista (ver P02-H1).
+    tipo: inferencia
+    basada_en: [H16, H17, H34, H29, H30, H20, H21, H36, H18, H19, H35, H24, H25, H37, H28]
+    estado: borrador
