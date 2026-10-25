@@ -79,7 +79,68 @@ hallazgos:
 
   - id: H08
     pregunta: P02
-    afirmacion: "La contracción supera al churn cada año; sin precio de lista no se puede saber qué parte es descuento."
+    afirmacion: >-
+      Con la regla de churn de 3 meses, la contracción supera al churn en 2022, 2023 y 2024;
+      con la regla de 1 mes ocurre lo contrario, así que la comparación depende de la definición.
+      Además, una parte de la contracción ocurre el mes siguiente a un retorno de pausa, coherente
+      con pagos atrasados no capturados por monto_recurrente, por lo que la contracción podría estar
+      sobreestimada. Sin precio de lista no se puede saber qué parte es descuento.
     tipo: inferencia
-    basada_en: [H02, H03]
+    basada_en: [H09, H02, H11, H10, H03, H12, H05, H13]
+    estado: borrador
+
+  - id: H09
+    pregunta: P02
+    afirmacion: "La contracción total de 2022 es {valor}."
+    tipo: hecho
+    consulta: "select sum(contraccion) from puente_mrr where month like '2022-%'"
+    valor: -22663875.36
+    estado: borrador
+
+  - id: H10
+    pregunta: P02
+    afirmacion: "La contracción total de 2024 (enero a octubre) es {valor}."
+    tipo: hecho
+    consulta: "select sum(contraccion) from puente_mrr where month like '2024-%'"
+    valor: -14881897.17
+    estado: borrador
+
+  - id: H11
+    pregunta: P02
+    afirmacion: "El churn total de 2022 (regla de 3 meses) es {valor}."
+    tipo: hecho
+    consulta: "select sum(churn) from puente_mrr where month like '2022-%'"
+    valor: -9549032.64
+    estado: borrador
+
+  - id: H12
+    pregunta: P02
+    afirmacion: "El churn total de 2024 (enero a octubre, regla de 3 meses) es {valor}."
+    tipo: hecho
+    consulta: "select sum(churn) from puente_mrr where month like '2024-%'"
+    valor: -11821897.08
+    estado: borrador
+
+  - id: H13
+    pregunta: P02
+    afirmacion: "El {valor}% de la contracción total 2022-2024 ocurre en el mes siguiente a un retorno_pausa del mismo cliente."
+    tipo: hecho
+    consulta: >-
+      select round(100 * post_pausa / total, 2)
+      from (
+          select sum(monto_recurrente - monto_recurrente_anterior) as post_pausa
+          from (
+              select
+                  estado,
+                  monto_recurrente,
+                  lag(estado)           over (partition by ID order by month) as estado_anterior,
+                  lag(monto_recurrente) over (partition by ID order by month) as monto_recurrente_anterior
+              from cliente_mes
+          )
+          where estado = 'activo'
+            and estado_anterior = 'retorno_pausa'
+            and monto_recurrente < monto_recurrente_anterior
+      ),
+      (select sum(contraccion) as total from puente_mrr)
+    valor: 24.14
     estado: borrador
