@@ -15,7 +15,15 @@
 - Datos disponibles: Transactions, SM_spend, Industry.
 - Datos que faltan: Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id.
 - Hipótesis: ver hallazgos/hipotesis.yaml (se formulan antes de calcular)
-- Plan de análisis: (lo propone el analista; requiere aprobación)
-- Límites: no hay datos de leads ni de etapas; toda conclusión sobre el funnel se infiere desde el resultado (clientes nuevos, ticket, retención, gasto).
+- Plan de análisis: (propuesto por el analista; aprobado por Madeley el 2026-10-25)
+  - Períodos: antes = 2022-03 a 2023-05; despues = 2023-06 a 2024-10. Se comparan promedios mensuales.
+  - Solo se prueban P01-H5 a P01-H8; P01-H1 a P01-H4 son no_evaluable (requieren el bloque E).
+  - Tablas en `sql/preguntas/P01_adquisicion.sql`:
+    1. `adquisicion_mes`: una fila por mes (2022-03 a 2024-10) con período, clientes nuevos, suma de ticket_inicial, gasto_sm, cac y cac_3m. Prueba P01-H5 y P01-H6.
+    2. `adquisicion_industria`: una fila por período e Industria con clientes nuevos, participación en el período y mediana de ticket_inicial. Prueba P01-H7.
+    3. `retencion_cohortes`: una fila por cohorte mensual de adquisición con período, clientes y retencion_cohorte a 3, 6 y 12 meses (vacía si el mes N supera 2024-08). Prueba P01-H8.
+- Límites:
+  - No hay datos de leads ni de etapas; toda conclusión sobre el funnel se infiere desde el resultado (clientes nuevos, ticket, retención, gasto).
+  - Si los clientes nuevos crecen "al mismo ritmo que los leads" no es evaluable sin datos de leads (definición lead, en diseño).
 - Revisión: (lo completa el revisor)
-- Estado: registrada
+- Estado: en_analisis

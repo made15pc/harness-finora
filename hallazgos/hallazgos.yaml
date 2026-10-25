@@ -152,3 +152,169 @@ hallazgos:
     consulta: "select sum(churn) from puente_mrr_1m where month like '2023-%'"
     valor: -25688392.80
     estado: borrador
+
+  # ── P01 — adquisición (antes = 2022-03 a 2023-05; despues = 2023-06 a 2024-10) ──
+
+  - id: H16
+    pregunta: P01
+    afirmacion: "El promedio mensual de clientes nuevos antes de 2023-06 (2022-03 a 2023-05) es {valor}."
+    tipo: hecho
+    consulta: "select avg(clientes_nuevos) from adquisicion_mes where periodo = 'antes'"
+    valor: 33.20
+    estado: borrador
+
+  - id: H17
+    pregunta: P01
+    afirmacion: "El promedio mensual de clientes nuevos desde 2023-06 (2023-06 a 2024-10) es {valor}."
+    tipo: hecho
+    consulta: "select avg(clientes_nuevos) from adquisicion_mes where periodo = 'despues'"
+    valor: 57.53
+    estado: borrador
+
+  - id: H18
+    pregunta: P01
+    afirmacion: "El promedio mensual de la suma de ticket_inicial antes de 2023-06 es {valor}."
+    tipo: hecho
+    consulta: "select avg(ticket_inicial_total) from adquisicion_mes where periodo = 'antes'"
+    valor: 2539514.39
+    estado: borrador
+
+  - id: H19
+    pregunta: P01
+    afirmacion: "El promedio mensual de la suma de ticket_inicial desde 2023-06 es {valor}."
+    tipo: hecho
+    consulta: "select avg(ticket_inicial_total) from adquisicion_mes where periodo = 'despues'"
+    valor: 2604949.51
+    estado: borrador
+
+  - id: H20
+    pregunta: P01
+    afirmacion: "El gasto_sm mensual promedio antes de 2023-06 (2022-03 a 2023-05) es {valor}."
+    tipo: hecho
+    consulta: "select avg(gasto_sm) from adquisicion_mes where periodo = 'antes'"
+    valor: 291393333.33
+    estado: borrador
+
+  - id: H21
+    pregunta: P01
+    afirmacion: "El gasto_sm mensual promedio desde 2023-06 (2023-06 a 2024-10) es {valor}."
+    tipo: hecho
+    consulta: "select avg(gasto_sm) from adquisicion_mes where periodo = 'despues'"
+    valor: 175347058.82
+    estado: borrador
+
+  - id: H22
+    pregunta: P01
+    afirmacion: "El cac_3m promedio antes de 2023-06 (2022-05 a 2023-05; los dos primeros meses no tienen ventana completa) es {valor}."
+    tipo: hecho
+    consulta: "select avg(cac_3m) from adquisicion_mes where periodo = 'antes'"
+    valor: 9516858.74
+    estado: borrador
+
+  - id: H23
+    pregunta: P01
+    afirmacion: "El cac_3m promedio desde 2023-06 es {valor}."
+    tipo: hecho
+    consulta: "select avg(cac_3m) from adquisicion_mes where periodo = 'despues'"
+    valor: 3286032.74
+    estado: borrador
+
+  - id: H24
+    pregunta: P01
+    afirmacion: "La mediana de ticket_inicial de los clientes nuevos antes de 2023-06 es {valor}."
+    tipo: hecho
+    consulta: "select median(monto_recurrente) from cliente_mes where estado = 'nuevo' and month < '2023-06'"
+    valor: 42000.00
+    estado: borrador
+
+  - id: H25
+    pregunta: P01
+    afirmacion: "La mediana de ticket_inicial de los clientes nuevos desde 2023-06 es {valor}."
+    tipo: hecho
+    consulta: "select median(monto_recurrente) from cliente_mes where estado = 'nuevo' and month >= '2023-06'"
+    valor: 36750.00
+    estado: borrador
+
+  - id: H26
+    pregunta: P01
+    afirmacion: "Antes de 2023-06, las industrias cuya mediana de ticket_inicial (antes) está bajo la mediana general (antes) suman el {valor}% de los clientes nuevos."
+    tipo: hecho
+    consulta: >-
+      select sum(a.participacion)
+      from adquisicion_industria a
+      where a.periodo = 'antes'
+        and a.Industria in (
+            select Industria from adquisicion_industria
+            where periodo = 'antes'
+              and ticket_inicial_mediana < (select median(monto_recurrente) from cliente_mes where estado = 'nuevo' and month < '2023-06')
+        )
+    valor: 29.92
+    estado: borrador
+
+  - id: H27
+    pregunta: P01
+    afirmacion: "Desde 2023-06, esas mismas industrias (mediana de ticket_inicial antes de 2023-06 bajo la mediana general de antes) suman el {valor}% de los clientes nuevos."
+    tipo: hecho
+    consulta: >-
+      select sum(a.participacion)
+      from adquisicion_industria a
+      where a.periodo = 'despues'
+        and a.Industria in (
+            select Industria from adquisicion_industria
+            where periodo = 'antes'
+              and ticket_inicial_mediana < (select median(monto_recurrente) from cliente_mes where estado = 'nuevo' and month < '2023-06')
+        )
+    valor: 33.54
+    estado: borrador
+
+  - id: H28
+    pregunta: P01
+    afirmacion: "De las 6 industrias, {valor} tienen una mediana de ticket_inicial menor desde 2023-06 que antes."
+    tipo: hecho
+    consulta: >-
+      select count(*)
+      from adquisicion_industria a
+      join adquisicion_industria d on d.Industria = a.Industria and d.periodo = 'despues'
+      where a.periodo = 'antes' and d.ticket_inicial_mediana < a.ticket_inicial_mediana
+    valor: 5
+    estado: borrador
+
+  - id: H29
+    pregunta: P01
+    afirmacion: "La retencion_cohorte a 6 meses de las cohortes 2022-03 a 2023-05, ponderada por clientes, es {valor}%."
+    tipo: hecho
+    consulta: "select sum(retencion_6m * clientes) / sum(clientes) from retencion_cohortes where periodo = 'antes' and retencion_6m is not null"
+    valor: 92.37
+    estado: borrador
+
+  - id: H30
+    pregunta: P01
+    afirmacion: "La retencion_cohorte a 6 meses de las cohortes 2023-06 a 2024-02 (últimas con mes 6 <= 2024-08), ponderada por clientes, es {valor}%."
+    tipo: hecho
+    consulta: "select sum(retencion_6m * clientes) / sum(clientes) from retencion_cohortes where periodo = 'despues' and retencion_6m is not null"
+    valor: 96.10
+    estado: borrador
+
+  - id: H31
+    pregunta: P01
+    afirmacion: "El promedio mensual de clientes nuevos de 2022-03 a 2022-12 es {valor}."
+    tipo: hecho
+    consulta: "select avg(clientes_nuevos) from adquisicion_mes where month between '2022-03' and '2022-12'"
+    valor: 27.20
+    estado: borrador
+
+  - id: H32
+    pregunta: P01
+    afirmacion: "El promedio mensual de clientes nuevos de 2023 es {valor}."
+    tipo: hecho
+    consulta: "select avg(clientes_nuevos) from adquisicion_mes where month like '2023-%'"
+    valor: 54.17
+    estado: borrador
+
+  - id: H33
+    pregunta: P01
+    afirmacion: "El promedio mensual de clientes nuevos de 2024 (enero a octubre) es {valor}."
+    tipo: hecho
+    consulta: "select avg(clientes_nuevos) from adquisicion_mes where month like '2024-%'"
+    valor: 55.40
+    estado: borrador

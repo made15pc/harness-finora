@@ -9,4 +9,110 @@
 #   evidencia: [ids de hallazgos.yaml]
 #   dato_faltante: qué dato permitiría evaluarla (obligatorio si no_evaluable)
 #   estado: borrador | aprobado
-hipotesis: []
+#
+# Períodos de comparación usados en P01 (todo el rango de adquisición disponible):
+#   antes   = 2022-03 a 2023-05 (15 meses; cliente_nuevo empieza en 2022-03)
+#   despues = 2023-06 a 2024-10 (17 meses)
+# Como los períodos tienen distinto largo, se comparan promedios mensuales, no totales.
+hipotesis:
+
+  # ── P01 — origen caso (obligatorias; no evaluables) ──────────────────
+
+  - id: P01-H1
+    pregunta: P01
+    hipotesis: "Demanda: el crecimiento se frena porque la demanda real no aumentó; el volumen de leads no subió o subió solo en fuentes que no compran."
+    origen: caso
+    si_es_cierta: "Leads nuevos por mes (lead) en despues <= antes, o el aumento de leads se concentra en fuentes cuya conversion_cohorte a Won en 90 días es menor que la del resto en el mismo período."
+    prueba: "lead, conversion_cohorte (diseño). Usa definiciones de diseño: su veredicto terminará en no_evaluable."
+    veredicto: no_evaluable
+    evidencia: []
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    estado: borrador
+
+  - id: P01-H2
+    pregunta: P01
+    hipotesis: "Calidad: entran más leads, pero de peor calidad, y por eso no se convierten."
+    origen: caso
+    si_es_cierta: "conversion_cohorte (lead → Won en 90 días) de las cohortes de lead de despues < la de antes, y la proporción de leads con alcanzo_etapa = SQL baja entre ambos períodos."
+    prueba: "conversion_cohorte, alcanzo_etapa (diseño). Usa definiciones de diseño: su veredicto terminará en no_evaluable."
+    veredicto: no_evaluable
+    evidencia: []
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    estado: borrador
+
+  - id: P01-H3
+    pregunta: P01
+    hipotesis: "Velocidad de atención: el equipo tarda más en contactar y mover leads, y los leads se enfrían."
+    origen: caso
+    si_es_cierta: "Mediana de speed_to_lead y de tiempo_en_etapa (New, Working, Engaged) en despues > antes, y la proporción de leads estancado sube entre ambos períodos."
+    prueba: "speed_to_lead, tiempo_en_etapa, estancado (diseño). Usa definiciones de diseño: su veredicto terminará en no_evaluable."
+    veredicto: no_evaluable
+    evidencia: []
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    estado: borrador
+
+  - id: P01-H4
+    pregunta: P01
+    hipotesis: "Conversión post-SQL: los leads llegan a SQL, pero el tramo AE (Demo, Proposal, Won) cierra menos."
+    origen: caso
+    si_es_cierta: "win_rate (Won / SQL por cohorte de SQL) en despues < antes, mientras la cantidad de SQL por mes no baja."
+    prueba: "win_rate, alcanzo_etapa (diseño). Usa definiciones de diseño: su veredicto terminará en no_evaluable."
+    veredicto: no_evaluable
+    evidencia: []
+    dato_faltante: "Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id."
+    estado: borrador
+
+  # ── P01 — origen analista (evaluables con datos actuales) ────────────
+
+  - id: P01-H5
+    pregunta: P01
+    hipotesis: "Premisa del CRO: los clientes nuevos no crecen; la adquisición está estancada en cantidad y en valor."
+    origen: analista
+    si_es_cierta: "Promedio mensual de cliente_nuevo en despues <= antes, y promedio mensual de la suma de ticket_inicial (valor nuevo que entra) en despues <= antes."
+    prueba: "cliente_nuevo, ticket_inicial"
+    veredicto: descartada
+    evidencia: [H16, H17, H18, H19, H31, H32, H33]
+    estado: borrador
+
+  - id: P01-H6
+    pregunta: P01
+    hipotesis: "El recorte de gasto S&M desde 2023-06 redujo la adquisición."
+    origen: analista
+    si_es_cierta: "Promedio mensual de gasto_sm en despues < antes, y promedio mensual de cliente_nuevo en despues < antes. Se informa también cac_3m promedio antes frente a despues."
+    prueba: "gasto_sm, cliente_nuevo, cac_3m"
+    veredicto: descartada
+    evidencia: [H20, H21, H16, H17, H22, H23]
+    estado: borrador
+
+  - id: P01-H7
+    pregunta: P01
+    hipotesis: "Cambio de mix de industria: la adquisición se desplazó hacia industrias que entran con menor ticket, lo que frena el valor nuevo aunque la cantidad se mantenga."
+    origen: analista
+    si_es_cierta: "Las industrias cuya participación en cliente_nuevo sube de antes a despues tienen una mediana de ticket_inicial en antes menor que la mediana general de antes; y la mediana general de ticket_inicial baja de antes a despues."
+    prueba: "cliente_nuevo y mediana de ticket_inicial segmentados por Industria"
+    veredicto: no_concluyente
+    evidencia: [H24, H25, H26, H27, H28]
+    estado: borrador
+
+  - id: P01-H8
+    pregunta: P01
+    hipotesis: "Los clientes que entran después de 2023-06 son de peor calidad: se pierden antes."
+    origen: analista
+    si_es_cierta: "retencion_cohorte a 6 meses (promedio de cohortes mensuales, ponderado por clientes) de las cohortes 2023-06 a 2024-02 < la de las cohortes 2022-03 a 2023-05. Las cohortes posteriores a 2024-02 quedan fuera porque su mes 6 supera 2024-08."
+    prueba: "retencion_cohorte (N = 6)"
+    veredicto: descartada
+    evidencia: [H29, H30]
+    estado: borrador
+
+  # ── P02 — origen analista ────────────────────────────────────────────
+
+  - id: P02-H1
+    pregunta: P02
+    hipotesis: "La contracción se explica principalmente por descuentos otorgados, no por clientes que reducen su plan."
+    origen: analista
+    si_es_cierta: "En 2022, 2023 y 2024, descuento (mrr_contratado − mrr_neto) de clientes activos explica más del 50% de la contraccion del mismo año; y descuento_expirado explica parte de la expansion posterior."
+    prueba: "descuento, mrr_contratado, mrr_neto, descuento_expirado (diseño) frente a contraccion (operativa). Usa definiciones de diseño: su veredicto terminará en no_evaluable."
+    veredicto: no_evaluable
+    evidencia: []
+    dato_faltante: "Precio de lista o plan por cliente-mes, y registro de descuentos con fecha de inicio y fin."
+    estado: borrador
