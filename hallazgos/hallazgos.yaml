@@ -386,5 +386,5 @@ hallazgos:
       estancamiento. La caída del ticket coincide con, pero no prueba, descuentos o planes más
       baratos; alternativas: pérdida de clientes grandes, más self-serve o prorrateo del primer mes.
     tipo: inferencia
-    basada_en: [H16, H17, H34, H32, H33, H40, H41, H29, H30, H20, H21, H36, H18, H19, H35, H24, H25, H37, H28]
+    basada_en: [H32, H33, H40, H41, H29, H30, H20, H21, H36, H18, H19, H35, H24, H25, H37, H28]
     estado: aprobado
