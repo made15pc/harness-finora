@@ -15,7 +15,7 @@ hallazgos:
     tipo: hecho
     consulta: "select mrr_final from puente_mrr where month = '2024-10'"
     valor: 97007446.83
-    estado: borrador
+    estado: aprobado
 
   - id: H02
     pregunta: P02
@@ -23,7 +23,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(contraccion) from puente_mrr where month like '2023-%'"
     valor: -21701150.10
-    estado: borrador
+    estado: aprobado
 
   - id: H03
     pregunta: P02
@@ -31,7 +31,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(churn) from puente_mrr where month like '2023-%'"
     valor: -13964662.53
-    estado: borrador
+    estado: aprobado
 
   - id: H04
     pregunta: P02
@@ -39,7 +39,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(churn) from puente_mrr where month like '2024-%'"
     valor: -11821897.08
-    estado: borrador
+    estado: aprobado
 
   - id: H05
     pregunta: P02
@@ -47,7 +47,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(churn) from puente_mrr_1m where month like '2024-%'"
     valor: -22777732.74
-    estado: borrador
+    estado: aprobado
 
   - id: H06
     pregunta: P02
@@ -55,7 +55,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(salida_pendiente) from puente_mrr where month like '2024-%'"
     valor: -3268147.89
-    estado: borrador
+    estado: aprobado
 
   - id: H07
     pregunta: P02
@@ -75,19 +75,22 @@ hallazgos:
         and estado_anterior = 'retorno_pausa'
         and monto_recurrente < monto_recurrente_anterior
     valor: -14300097.84
-    estado: borrador
+    estado: aprobado
 
   - id: H08
     pregunta: P02
     afirmacion: >-
-      Con la regla de churn de 3 meses, la contracción supera al churn en 2022, 2023 y 2024;
-      con la regla de 1 mes ocurre lo contrario, así que la comparación depende de la definición.
-      Además, una parte de la contracción ocurre el mes siguiente a un retorno de pausa, coherente
-      con pagos atrasados no capturados por monto_recurrente, por lo que la contracción podría estar
-      sobreestimada. Sin precio de lista no se puede saber qué parte es descuento.
+      Con la regla de churn de 3 meses, la contracción supera al churn en 2022 y 2023; con la regla
+      de 1 mes ocurre lo contrario, así que la comparación depende de la definición. En 2024 la
+      comparación es no concluyente: el churn está truncado y la salida_pendiente, si termina siendo
+      churn, puede invertir el resultado. Además, una parte de la contracción ocurre el mes siguiente
+      a un retorno de pausa, coherente con pagos atrasados no capturados por monto_recurrente (en ese
+      caso la contracción como componente estaría inflada, con su contrapartida en retorno_pausa), pero
+      también con reducciones reales de plan o pagos parciales. Sin precio de lista no se puede saber
+      qué parte es descuento.
     tipo: inferencia
-    basada_en: [H09, H02, H11, H10, H03, H04, H14, H15, H05, H13]
-    estado: borrador
+    basada_en: [H09, H02, H11, H10, H03, H04, H06, H14, H15, H05, H13]
+    estado: aprobado
 
   - id: H09
     pregunta: P02
@@ -95,7 +98,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(contraccion) from puente_mrr where month like '2022-%'"
     valor: -22663875.36
-    estado: borrador
+    estado: aprobado
 
   - id: H10
     pregunta: P02
@@ -103,7 +106,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(contraccion) from puente_mrr where month like '2024-%'"
     valor: -14881897.17
-    estado: borrador
+    estado: aprobado
 
   - id: H11
     pregunta: P02
@@ -111,7 +114,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(churn) from puente_mrr where month like '2022-%'"
     valor: -9549032.64
-    estado: borrador
+    estado: aprobado
 
   - id: H13
     pregunta: P02
@@ -135,7 +138,7 @@ hallazgos:
       ),
       (select sum(contraccion) as total from puente_mrr)
     valor: 24.14
-    estado: borrador
+    estado: aprobado
 
   - id: H14
     pregunta: P02
@@ -143,7 +146,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(churn) from puente_mrr_1m where month like '2022-%'"
     valor: -31773997.50
-    estado: borrador
+    estado: aprobado
 
   - id: H15
     pregunta: P02
@@ -151,7 +154,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(churn) from puente_mrr_1m where month like '2023-%'"
     valor: -25688392.80
-    estado: borrador
+    estado: aprobado
 
   # ── P01 — adquisición (antes = 2022-03 a 2023-05; despues = 2023-06 a 2024-10) ──
 
@@ -161,7 +164,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(clientes_nuevos) from adquisicion_mes where periodo = 'antes'"
     valor: 33.20
-    estado: borrador
+    estado: aprobado
 
   - id: H17
     pregunta: P01
@@ -169,7 +172,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(clientes_nuevos) from adquisicion_mes where periodo = 'despues'"
     valor: 57.53
-    estado: borrador
+    estado: aprobado
 
   - id: H18
     pregunta: P01
@@ -177,7 +180,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(ticket_inicial_total) from adquisicion_mes where periodo = 'antes'"
     valor: 2539514.39
-    estado: borrador
+    estado: aprobado
 
   - id: H19
     pregunta: P01
@@ -185,7 +188,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(ticket_inicial_total) from adquisicion_mes where periodo = 'despues'"
     valor: 2604949.51
-    estado: borrador
+    estado: aprobado
 
   - id: H20
     pregunta: P01
@@ -193,7 +196,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(gasto_sm) from adquisicion_mes where periodo = 'antes'"
     valor: 291393333.33
-    estado: borrador
+    estado: aprobado
 
   - id: H21
     pregunta: P01
@@ -201,7 +204,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(gasto_sm) from adquisicion_mes where periodo = 'despues'"
     valor: 175347058.82
-    estado: borrador
+    estado: aprobado
 
   - id: H22
     pregunta: P01
@@ -209,7 +212,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(cac_3m) from adquisicion_mes where periodo = 'antes'"
     valor: 9516858.74
-    estado: borrador
+    estado: aprobado
 
   - id: H23
     pregunta: P01
@@ -217,7 +220,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(cac_3m) from adquisicion_mes where periodo = 'despues'"
     valor: 3286032.74
-    estado: borrador
+    estado: aprobado
 
   - id: H24
     pregunta: P01
@@ -225,7 +228,7 @@ hallazgos:
     tipo: hecho
     consulta: "select median(monto_recurrente) from cliente_mes where estado = 'nuevo' and month < '2023-06'"
     valor: 42000.00
-    estado: borrador
+    estado: aprobado
 
   - id: H25
     pregunta: P01
@@ -233,7 +236,7 @@ hallazgos:
     tipo: hecho
     consulta: "select median(monto_recurrente) from cliente_mes where estado = 'nuevo' and month >= '2023-06'"
     valor: 36750.00
-    estado: borrador
+    estado: aprobado
 
   - id: H26
     pregunta: P01
@@ -249,7 +252,7 @@ hallazgos:
               and ticket_inicial_mediana < (select median(monto_recurrente) from cliente_mes where estado = 'nuevo' and month < '2023-06')
         )
     valor: 29.92
-    estado: borrador
+    estado: aprobado
 
   - id: H27
     pregunta: P01
@@ -265,7 +268,7 @@ hallazgos:
               and ticket_inicial_mediana < (select median(monto_recurrente) from cliente_mes where estado = 'nuevo' and month < '2023-06')
         )
     valor: 33.54
-    estado: borrador
+    estado: aprobado
 
   - id: H28
     pregunta: P01
@@ -277,7 +280,7 @@ hallazgos:
       join adquisicion_industria d on d.Industria = a.Industria and d.periodo = 'despues'
       where a.periodo = 'antes' and d.ticket_inicial_mediana < a.ticket_inicial_mediana
     valor: 5
-    estado: borrador
+    estado: aprobado
 
   - id: H29
     pregunta: P01
@@ -285,7 +288,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(retencion_6m * clientes) / sum(clientes) from retencion_cohortes where periodo = 'antes' and retencion_6m is not null"
     valor: 92.37
-    estado: borrador
+    estado: aprobado
 
   - id: H30
     pregunta: P01
@@ -293,7 +296,7 @@ hallazgos:
     tipo: hecho
     consulta: "select sum(retencion_6m * clientes) / sum(clientes) from retencion_cohortes where periodo = 'despues' and retencion_6m is not null"
     valor: 96.10
-    estado: borrador
+    estado: aprobado
 
   - id: H31
     pregunta: P01
@@ -301,7 +304,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(clientes_nuevos) from adquisicion_mes where month between '2022-03' and '2022-12'"
     valor: 27.20
-    estado: borrador
+    estado: aprobado
 
   - id: H32
     pregunta: P01
@@ -309,7 +312,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(clientes_nuevos) from adquisicion_mes where month like '2023-%'"
     valor: 54.17
-    estado: borrador
+    estado: aprobado
 
   - id: H33
     pregunta: P01
@@ -317,7 +320,7 @@ hallazgos:
     tipo: hecho
     consulta: "select avg(clientes_nuevos) from adquisicion_mes where month like '2024-%'"
     valor: 55.40
-    estado: borrador
+    estado: aprobado
 
   - id: H34
     pregunta: P01
@@ -325,7 +328,7 @@ hallazgos:
     tipo: hecho
     consulta: "select 100 * (avg(clientes_nuevos) filter (where periodo = 'despues') / avg(clientes_nuevos) filter (where periodo = 'antes') - 1) from adquisicion_mes"
     valor: 73.28
-    estado: borrador
+    estado: aprobado
 
   - id: H35
     pregunta: P01
@@ -333,7 +336,7 @@ hallazgos:
     tipo: hecho
     consulta: "select 100 * (avg(ticket_inicial_total) filter (where periodo = 'despues') / avg(ticket_inicial_total) filter (where periodo = 'antes') - 1) from adquisicion_mes"
     valor: 2.58
-    estado: borrador
+    estado: aprobado
 
   - id: H36
     pregunta: P01
@@ -341,7 +344,7 @@ hallazgos:
     tipo: hecho
     consulta: "select 100 * (avg(gasto_sm) filter (where periodo = 'despues') / avg(gasto_sm) filter (where periodo = 'antes') - 1) from adquisicion_mes"
     valor: -39.82
-    estado: borrador
+    estado: aprobado
 
   - id: H37
     pregunta: P01
@@ -349,14 +352,39 @@ hallazgos:
     tipo: hecho
     consulta: "select 100 * (median(monto_recurrente) filter (where month >= '2023-06') / median(monto_recurrente) filter (where month < '2023-06') - 1) from cliente_mes where estado = 'nuevo'"
     valor: -12.50
-    estado: borrador
+    estado: aprobado
+
+  - id: H39
+    pregunta: P01
+    afirmacion: "El promedio mensual de la suma de ticket_inicial de 2022-03 a 2022-12 es {valor}."
+    tipo: hecho
+    consulta: "select avg(ticket_inicial_total) from adquisicion_mes where month between '2022-03' and '2022-12'"
+    valor: 2650027.53
+    estado: aprobado
+
+  - id: H40
+    pregunta: P01
+    afirmacion: "El promedio mensual de la suma de ticket_inicial de 2023 es {valor}."
+    tipo: hecho
+    consulta: "select avg(ticket_inicial_total) from adquisicion_mes where month like '2023-%'"
+    valor: 2524028.94
+    estado: aprobado
+
+  - id: H41
+    pregunta: P01
+    afirmacion: "El promedio mensual de la suma de ticket_inicial de 2024 (enero a octubre) es {valor}."
+    tipo: hecho
+    consulta: "select avg(ticket_inicial_total) from adquisicion_mes where month like '2024-%'"
+    valor: 2558823.50
+    estado: aprobado
 
   - id: H38
     pregunta: P01
     afirmacion: >-
-      La adquisición creció en cantidad y retiene mejor con menos gasto, pero el valor que entra
-      casi no crece porque el ticket cae dentro de casi todas las industrias; esto es coherente con
-      descuentos o planes de entrada más baratos, que no se pueden medir sin precio de lista (ver P02-H1).
+      Desde 2023, la adquisición está plana en cantidad y valor, el ticket mediano de entrada cae
+      dentro de casi todas las industrias, y ni el recorte de gasto ni la retención explican el
+      estancamiento. La caída del ticket coincide con, pero no prueba, descuentos o planes más
+      baratos; alternativas: pérdida de clientes grandes, más self-serve o prorrateo del primer mes.
     tipo: inferencia
-    basada_en: [H16, H17, H34, H29, H30, H20, H21, H36, H18, H19, H35, H24, H25, H37, H28]
-    estado: borrador
+    basada_en: [H16, H17, H34, H32, H33, H40, H41, H29, H30, H20, H21, H36, H18, H19, H35, H24, H25, H37, H28]
+    estado: aprobado

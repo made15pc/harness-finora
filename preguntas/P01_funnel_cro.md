@@ -25,5 +25,7 @@
 - Límites:
   - No hay datos de leads ni de etapas; toda conclusión sobre el funnel se infiere desde el resultado (clientes nuevos, ticket, retención, gasto).
   - Si los clientes nuevos crecen "al mismo ritmo que los leads" no es evaluable sin datos de leads (definición lead, en diseño).
+  - cac y cac_3m incluyen clientes self-serve; no se puede separar la adquisición asistida por ventas (motion_entrada, en diseño).
+  - La escala de SM_spend (× 100.000.000) debe confirmarse con el negocio: el gasto_sm mensual supera al MRR. Mientras tanto, de gasto y CAC se citan solo variaciones %.
 - Revisión: (lo completa el revisor)
 - Estado: en_analisis
