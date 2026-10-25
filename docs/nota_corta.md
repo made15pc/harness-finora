@@ -3,6 +3,8 @@
 **Mensaje principal (H38, inferencia):** desde 2023 la adquisición está plana en cantidad (54,2 → 55,4 clientes nuevos/mes; H32, H33) y en valor; el ticket mediano de entrada cae 12,5% (H37) en 5 de 6 industrias (H28), y ni el recorte de gasto ni la retención lo explican.
 **Tablero:** https://made15pc.github.io/harness-finora/ · **Repo:** https://github.com/made15pc/harness-finora
 
+Qué recomiendo al CRO: (1) auditar el ticket de entrada: qué planes, descuentos o condiciones explican la caída dentro de cada industria, antes de invertir más en generar leads; (2) instrumentar el funnel (eventos de etapa con fecha, motion y vínculo lead→cliente) para evaluar las 4 hipótesis del caso que hoy no son evaluables; (3) no atribuir el estancamiento al gasto ni a la calidad: los datos no lo respaldan (P01-H6, P01-H8).
+
 ## 1. Qué preguntas prioricé
 
 - **P01 (CRO), principal.** Habilita la decisión más urgente: dónde intervenir para volver a crecer. Sin datos de funnel, la abordé desde el resultado: clientes nuevos, ticket inicial, retención y gasto.
@@ -14,6 +16,7 @@
 - **Churn:** 3 meses seguidos en 0, fechado en el primer mes en 0. Medí la sensibilidad con una regla de 1 mes: en 2022 el churn pasa de −9,5 M a −31,8 M (H11, H14).
 - **Pausa:** un hueco de 1 o 2 meses seguido de un nuevo pago no es churn.
 - **monto_recurrente y cobro_extra:** separan los pagos atrasados o prepagos del ingreso recurrente.
+- Pagos atrasados: hay clientes que al volver pagan un múltiplo exacto de su cuota; los separé como cobro_extra. Aun así, el 24,1% de la contracción ocurre el mes siguiente a un retorno de pausa (H13), así que la contracción podría estar sobreestimada. Otras inconsistencias y su tratamiento están en la pestaña Datos y límites del tablero.
 - **Retención:** la medí como supervivencia sin churn hasta el mes N, solo cuando N ≤ 2024-08.
 - **Ticket de entrada:** usé la mediana, por la asimetría de los montos.
 - **Corte antes/después:** 2023-06, con comparación de promedios mensuales.
@@ -35,13 +38,14 @@
 - Separar MRR contratado, descuento y MRR neto, para que un descuento que expira no cuente como expansión.
 - Definir si "cliente nuevo" es el Won del CRM o el primer pago (hoy es el primer pago).
 - Mantener un único glosario versionado de métricas, como `reglas/definiciones.yaml`.
+- Operar el funnel con una revisión semanal: conversión por cohorte y motion, leads estancados por etapa y responsable, y CAC por canal; cada vista ligada a una decisión (capacidad SDR, criterios de calificación, ruteo directo a AE, inversión por canal).
 
 ## 5. Cómo usé la IA, qué validé y cómo aseguré la calidad
 
 - **Analista:** Claude Code registró las hipótesis antes de calcular, escribió el SQL y propuso los veredictos.
 - **Revisor:** un agente independiente, de solo lectura, intentó refutar cada veredicto.
 - **Tablero:** lo armó un agente constructor que solo usa hallazgos aprobados.
-- **Cálculo:** todo en SQL determinista (DuckDB), sin cifras escritas a mano.
+- **Cálculo:** todo en SQL determinista (DuckDB). En el tablero y los hallazgos ninguna cifra está escrita a mano; esta nota cita el id del hallazgo aprobado de cada cifra y un test verifica que coincidan.
 - **Validaciones:** hay 82 tests automáticos, y cada hecho se recalcula desde su consulta en cada corrida.
 - **Aprobación humana:** yo aprobé las definiciones, las hipótesis y los veredictos.
 

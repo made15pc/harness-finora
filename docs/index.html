@@ -313,7 +313,7 @@ code { font-size: 0.82em; background: var(--chip-neutro); padding: 0 4px; border
         <code>preguntas/PXX.md</code><span>El negocio formula la pregunta y la decisión que habilita.</span></li><li class="paso"><span class="paso-num">2</span><strong>Definiciones</strong>
         <code>reglas/definiciones.yaml</code><span>21 métricas operativas; las de diseño solo como dato faltante.</span></li><li class="paso"><span class="paso-num">3</span><strong>SQL</strong>
         <code>sql/</code><span>DuckDB: limpieza (única conversión de unidades), ciclo de vida y tablas por pregunta.</span></li><li class="paso"><span class="paso-num">4</span><strong>Validaciones</strong>
-        <code>validaciones/</code><span>78 pruebas pasaron en la última corrida.</span></li><li class="paso"><span class="paso-num">5</span><strong>Hallazgos</strong>
+        <code>validaciones/</code><span>81 pruebas pasaron en la última corrida.</span></li><li class="paso"><span class="paso-num">5</span><strong>Hallazgos</strong>
         <code>hallazgos/*.yaml</code><span>Cada hecho guarda su consulta y se recalcula en las pruebas.</span></li><li class="paso"><span class="paso-num">6</span><strong>Revisor</strong>
         <code>preguntas/revision_*.md</code><span>Agente independiente que objeta veredictos e inferencias.</span></li><li class="paso"><span class="paso-num">7</span><strong>Aprobación</strong>
         <code>estado: aprobado</code><span>Decisión humana: 40 hallazgos y 9 hipótesis aprobados.</span></li><li class="paso"><span class="paso-num">8</span><strong>Tablero</strong>
@@ -321,7 +321,7 @@ code { font-size: 0.82em; background: var(--chip-neutro); padding: 0 4px; border
     </section>
     <section class="tarjeta">
       <h2>Validaciones</h2>
-      <p>La última corrida de <code>python ejecutar.py</code> pasó <strong>78</strong> pruebas
+      <p>La última corrida de <code>python ejecutar.py</code> pasó <strong>81</strong> pruebas
          (datos de entrada, cuadre de unidades, definiciones, cifras del glosario, puente de MRR, hallazgos e hipótesis).
          Después de generar esta página, <code>validaciones/test_tablero.py</code> comprueba que no queden marcadores
          sin reemplazar ni ids en borrador.</p>
