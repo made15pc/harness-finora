@@ -46,7 +46,7 @@ Qué recomiendo al CRO: (1) auditar el ticket de entrada: qué planes, descuento
 - **Revisor:** un agente independiente, de solo lectura, intentó refutar cada veredicto.
 - **Tablero:** lo armó un agente constructor que solo usa hallazgos aprobados.
 - **Cálculo:** todo en SQL determinista (DuckDB). En el tablero y los hallazgos ninguna cifra está escrita a mano; esta nota cita el id del hallazgo aprobado de cada cifra y un test verifica que coincidan.
-- **Validaciones:** hay 82 tests automáticos, y cada hecho se recalcula desde su consulta en cada corrida.
+- **Validaciones:** hay más de 80 tests automáticos, y cada hecho se recalcula desde su consulta en cada corrida.
 - **Aprobación humana:** yo aprobé las definiciones, las hipótesis y los veredictos.
 
 **Ejemplo:** la primera lectura decía que los clientes nuevos crecían +73,3% (H34). El revisor mostró que esa cifra mezclaba la rampa de 2022 (27,2 clientes/mes; H31) con un nivel que está plano desde 2023 (H32, H33). La hipótesis del CRO pasó a no concluyente y la conclusión se corrigió antes de publicar.
