@@ -24,6 +24,11 @@ def test_ids_unicos():
     assert len(ids) == len(set(ids))
 
 
+def test_consultas_unicas():
+    consultas = [" ".join(h["consulta"].lower().split()) for h in HALLAZGOS if h.get("consulta")]
+    assert len(consultas) == len(set(consultas))
+
+
 def test_tipos_validos():
     assert all(h["tipo"] in ("hecho", "inferencia") for h in HALLAZGOS)
 
