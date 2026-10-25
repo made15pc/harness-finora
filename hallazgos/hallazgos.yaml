@@ -1,0 +1,85 @@
+# Esquema de cada hallazgo:
+# - id: H01
+#   pregunta: P01 | P02
+#   afirmacion: texto con {valor} donde va la cifra
+#   tipo: hecho | inferencia
+#   consulta: SQL sobre datos/finora.duckdb que devuelve UN solo valor (obligatoria si tipo = hecho)
+#   valor: resultado de la consulta
+#   basada_en: [ids de hallazgos tipo hecho] (obligatorio si tipo = inferencia)
+#   estado: borrador | aprobado
+hallazgos:
+
+  - id: H01
+    pregunta: P02
+    afirmacion: "El MRR final a 2024-10 es {valor}."
+    tipo: hecho
+    consulta: "select mrr_final from puente_mrr where month = '2024-10'"
+    valor: 97007446.83
+    estado: borrador
+
+  - id: H02
+    pregunta: P02
+    afirmacion: "La contracción total de 2023 es {valor}."
+    tipo: hecho
+    consulta: "select sum(contraccion) from puente_mrr where month like '2023-%'"
+    valor: -21701150.10
+    estado: borrador
+
+  - id: H03
+    pregunta: P02
+    afirmacion: "El churn total de 2023 (regla de 3 meses) es {valor}."
+    tipo: hecho
+    consulta: "select sum(churn) from puente_mrr where month like '2023-%'"
+    valor: -13964662.53
+    estado: borrador
+
+  - id: H04
+    pregunta: P02
+    afirmacion: "El churn de 2024 (enero a octubre) con la regla de 3 meses es {valor}."
+    tipo: hecho
+    consulta: "select sum(churn) from puente_mrr where month like '2024-%'"
+    valor: -11821897.08
+    estado: borrador
+
+  - id: H05
+    pregunta: P02
+    afirmacion: "El churn de 2024 (enero a octubre) con la regla de 1 mes (churn_sensibilidad_1m) es {valor}."
+    tipo: hecho
+    consulta: "select sum(churn) from puente_mrr_1m where month like '2024-%'"
+    valor: -22777732.74
+    estado: borrador
+
+  - id: H06
+    pregunta: P02
+    afirmacion: "La salida_pendiente de 2024 (MRR en riesgo aún no clasificable como pausa o churn) es {valor}."
+    tipo: hecho
+    consulta: "select sum(salida_pendiente) from puente_mrr where month like '2024-%'"
+    valor: -3268147.89
+    estado: borrador
+
+  - id: H07
+    pregunta: P02
+    afirmacion: "La contracción en el mes siguiente a un retorno_pausa, para el mismo cliente, suma {valor} en todo el período."
+    tipo: hecho
+    consulta: >-
+      select sum(monto_recurrente - monto_recurrente_anterior)
+      from (
+          select
+              estado,
+              monto_recurrente,
+              lag(estado)           over (partition by ID order by month) as estado_anterior,
+              lag(monto_recurrente) over (partition by ID order by month) as monto_recurrente_anterior
+          from cliente_mes
+      )
+      where estado = 'activo'
+        and estado_anterior = 'retorno_pausa'
+        and monto_recurrente < monto_recurrente_anterior
+    valor: -14300097.84
+    estado: borrador
+
+  - id: H08
+    pregunta: P02
+    afirmacion: "La contracción supera al churn cada año; sin precio de lista no se puede saber qué parte es descuento."
+    tipo: inferencia
+    basada_en: [H02, H03]
+    estado: borrador
