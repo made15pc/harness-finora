@@ -206,6 +206,8 @@ def grafico_adquisicion():
     df = ADQUISICION_MES
     meses = df["month"].tolist()
     posicion_corte = meses.index(MES_CORTE) - 0.5
+    meses_2022 = [i for i, m in enumerate(meses) if m.startswith("2022")]
+    posicion_2022 = (meses_2022[0] + meses_2022[-1]) / 2
     trazas = [
         {"type": "bar", "name": "Clientes nuevos", "x": meses, "y": df["clientes_nuevos"].tolist(),
          "xaxis": "x", "yaxis": "y", "marker": {"color": "var:--serie-1"},
@@ -225,14 +227,18 @@ def grafico_adquisicion():
                  "y0": 0, "y1": 1, "line": {"color": "var:--tinta-2", "width": 1.5, "dash": "dot"}}],
         annotations=[{"xref": "x", "yref": "paper", "x": posicion_corte, "y": 1, "xanchor": "left",
                       "yanchor": "top", "text": f" desde {MES_CORTE}", "showarrow": False,
+                      "font": {"color": "var:--tinta-2", "size": 11}},
+                     {"xref": "x", "yref": "paper", "x": posicion_2022, "y": 1, "xanchor": "center",
+                      "yanchor": "top", "text": "2022: rampa inicial", "showarrow": False,
                       "font": {"color": "var:--tinta-2", "size": 11}}],
     )
     filas = [[m, numero_es(c), monto_es(g)] for m, c, g in zip(meses, df["clientes_nuevos"], df["gasto_sm"])]
     return {
         "id": "g-adquisicion",
-        "titulo": f"Desde {MES_CORTE}: clientes nuevos por mes {variacion_de('H34')} y gasto S&M {variacion_de('H36')}",
+        "titulo": (f"Clientes nuevos planos desde 2023 ({valor_de('H32')} → {valor_de('H33')} por mes) "
+                   f"mientras el gasto S&M baja {numero_es(abs(float(hallazgo_aprobado('H36')['valor'])), 1)}% desde {MES_CORTE}"),
         "bajada": texto("{H32} {H33} La escala de SM_spend está pendiente de confirmar: lea la forma del gasto, no su nivel."),
-        "fuente": "datos/tablas/adquisicion_mes.csv · " + chips_ids(["H34", "H36", "H32", "H33"]),
+        "fuente": "datos/tablas/adquisicion_mes.csv · " + chips_ids(["H32", "H33", "H36"]),
         "trazas": trazas, "layout": layout,
         "tabla": tabla_datos(["Mes", "Clientes nuevos", "gasto_sm"], filas),
     }
