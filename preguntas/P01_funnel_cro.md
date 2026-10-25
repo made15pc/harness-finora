@@ -28,4 +28,4 @@
   - cac y cac_3m incluyen clientes self-serve; no se puede separar la adquisición asistida por ventas (motion_entrada, en diseño).
   - La escala de SM_spend (× 100.000.000) debe confirmarse con el negocio: el gasto_sm mensual supera al MRR. Mientras tanto, de gasto y CAC se citan solo variaciones %.
 - Revisión: (lo completa el revisor)
-- Estado: en_analisis
+- Estado: revisada

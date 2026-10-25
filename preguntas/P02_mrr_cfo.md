@@ -16,4 +16,4 @@
 - Plan de análisis: (lo propone el analista; requiere aprobación)
 - Límites: con monto cobrado únicamente, descuento y contracción no se pueden separar.
 - Revisión: (lo completa el revisor)
-- Estado: en_analisis
+- Estado: revisada

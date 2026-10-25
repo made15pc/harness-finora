@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tablero Finora</title>
+<style>
+:root {
+  color-scheme: light;
+  --plano: #f9f9f7; --superficie: #fcfcfb; --tinta-1: #0b0b0b; --tinta-2: #52514e; --tinta-3: #898781;
+  --rejilla: #e1e0d9; --eje: #c3c2b7; --borde: rgba(11,11,11,0.10);
+  --serie-1: #2a78d6; --serie-2: #eb6834; --serie-3: #1baf7a; --neutro: #b5b3ab;
+  --bien: #0ca30c; --aviso: #fab219; --critico: #d03b3b; --chip-neutro: #e1e0d9;
+  --acento-suave: #cde2fb;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --plano: #0d0d0d; --superficie: #1a1a19; --tinta-1: #f0efec; --tinta-2: #c3c2b7; --tinta-3: #898781;
+    --rejilla: #2c2c2a; --eje: #383835; --borde: rgba(255,255,255,0.10);
+    --serie-1: #3987e5; --serie-2: #d95926; --serie-3: #199e70; --neutro: #6b6a64;
+    --chip-neutro: #383835; --acento-suave: #184f95;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --plano: #0d0d0d; --superficie: #1a1a19; --tinta-1: #f0efec; --tinta-2: #c3c2b7; --tinta-3: #898781;
+  --rejilla: #2c2c2a; --eje: #383835; --borde: rgba(255,255,255,0.10);
+  --serie-1: #3987e5; --serie-2: #d95926; --serie-3: #199e70; --neutro: #6b6a64;
+  --chip-neutro: #383835; --acento-suave: #184f95;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body { background: var(--plano); color: var(--tinta-1); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif; }
+.contenedor { max-width: 1120px; margin: 0 auto; padding: 16px; }
+header h1 { font-size: 1.4rem; margin: 8px 0 2px; }
+header p { margin: 0; color: var(--tinta-2); }
+nav { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; }
+nav button { font: inherit; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--borde);
+  background: var(--superficie); color: var(--tinta-2); cursor: pointer; }
+nav button[aria-selected="true"] { background: var(--tinta-1); color: var(--plano); border-color: var(--tinta-1); }
+.pestana[hidden] { display: none; }
+.tarjeta { background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; padding: 16px; margin: 0 0 16px; min-width: 0; }
+h2 { font-size: 1.1rem; margin: 0 0 8px; }
+h3 { font-size: 1rem; margin: 0 0 4px; }
+.bajada, figcaption { color: var(--tinta-2); font-size: 0.85rem; margin: 0 0 8px; }
+figure { margin: 0 0 16px; }
+.lienzo { width: 100%; min-height: 300px; }
+.mensaje { border-left: 4px solid var(--serie-1); }
+.mensaje-rotulo { color: var(--tinta-2); font-size: 0.85rem; }
+.mensaje-texto { font-size: 1.15rem; margin: 6px 0; }
+.mensaje-base { font-size: 0.8rem; color: var(--tinta-3); margin: 0; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 16px; }
+.kpi { background: var(--superficie); border: 1px solid var(--borde); border-radius: 12px; padding: 16px; min-width: 0; }
+.kpi-rotulo { color: var(--tinta-2); font-size: 0.85rem; }
+.kpi-valor { font-size: 1.7rem; font-weight: 600; margin: 4px 0; }
+.kpi-nota { color: var(--tinta-2); font-size: 0.8rem; margin: 0; }
+.etiqueta { display: inline-block; font-size: 0.72rem; padding: 0 6px; border-radius: 4px; border: 1px solid var(--borde);
+  color: var(--tinta-2); white-space: nowrap; vertical-align: 1px; }
+.etiqueta-inferencia { border-style: dashed; }
+.etiqueta-hecho { background: var(--acento-suave); color: var(--tinta-1); }
+.decisiones li { margin-bottom: 10px; }
+.id { display: inline-block; font-size: 0.75rem; padding: 0 5px; border-radius: 4px; background: var(--chip-neutro);
+  color: var(--tinta-1); margin: 1px 0; cursor: help; }
+.tabla-scroll { overflow-x: auto; max-width: 100%; }
+table { border-collapse: collapse; width: 100%; font-size: 0.85rem; }
+th, td { text-align: left; vertical-align: top; padding: 6px 8px; border-bottom: 1px solid var(--rejilla); }
+th { color: var(--tinta-2); font-weight: 600; }
+td { font-variant-numeric: tabular-nums; }
+.tabla-hipotesis { min-width: 900px; }
+.nowrap { white-space: nowrap; }
+.chip { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.78rem; white-space: nowrap; font-weight: 600; }
+.chip-bien { background: var(--bien); color: #fff; }
+.chip-critico { background: var(--critico); color: #fff; }
+.chip-aviso { background: var(--aviso); color: #0b0b0b; }
+.chip-neutro { background: var(--chip-neutro); color: var(--tinta-1); }
+details summary { cursor: pointer; color: var(--tinta-2); font-size: 0.85rem; margin: 6px 0; }
+code { font-size: 0.82em; background: var(--chip-neutro); padding: 0 4px; border-radius: 4px; overflow-wrap: anywhere; }
+.nota ul { margin: 0; padding-left: 20px; }
+.diagrama { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px 28px; }
+.paso { position: relative; border: 1px solid var(--borde); border-radius: 10px; padding: 10px; display: flex;
+  flex-direction: column; gap: 4px; font-size: 0.85rem; min-width: 0; }
+.paso span:last-child { color: var(--tinta-2); }
+.paso-num { position: absolute; top: -10px; left: 10px; background: var(--serie-1); color: #fff; border-radius: 999px;
+  width: 20px; height: 20px; font-size: 0.72rem; display: grid; place-items: center; }
+.paso:not(:last-child)::after { content: "→"; position: absolute; right: -22px; top: 50%; transform: translateY(-50%); color: var(--tinta-3); }
+@media (min-width: 761px) { .paso:nth-child(4n)::after { content: none; } }
+@media (max-width: 760px) {
+  .diagrama { grid-template-columns: 1fr; }
+  .paso:not(:last-child)::after { content: "↓"; right: auto; left: 50%; top: auto; bottom: -22px; transform: none; }
+  .kpi-valor { font-size: 1.6rem; }
+}
+</style>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+</head>
+<body>
+<div class="contenedor">
+  <header>
+    <h1>Finora · crecimiento y MRR</h1>
+    <p>Datos hasta 2024-10. Cada afirmación lleva su etiqueta (hecho o inferencia) y el id del hallazgo aprobado del que sale.</p>
+  </header>
+  <nav aria-label="Pestañas"><button type="button" data-pestana="resumen" aria-selected="false">Resumen</button><button type="button" data-pestana="adquisicion" aria-selected="false">Adquisición (CRO)</button><button type="button" data-pestana="hipotesis" aria-selected="false">Hipótesis</button><button type="button" data-pestana="mrr" aria-selected="false">MRR (CFO)</button><button type="button" data-pestana="datos" aria-selected="false">Datos y límites</button><button type="button" data-pestana="como" aria-selected="false">Cómo funciona</button></nav>
+  <section class="pestana" id="resumen" hidden>
+    <section class="tarjeta mensaje">
+      <div class="mensaje-rotulo">Mensaje principal <span class="etiqueta etiqueta-inferencia">inferencia · H38</span></div>
+      <p class="mensaje-texto">Desde 2023, la adquisición está plana en cantidad y valor, el ticket mediano de entrada cae dentro de casi todas las industrias, y ni el recorte de gasto ni la retención explican el estancamiento. La caída del ticket coincide con, pero no prueba, descuentos o planes más baratos; alternativas: pérdida de clientes grandes, más self-serve o prorrateo del primer mes.</p>
+      <p class="mensaje-base">Basada en: <span class="id" title="El promedio mensual de clientes nuevos antes de 2023-06 (2022-03 a 2023-05) es 33,2.">H16</span> <span class="id" title="El promedio mensual de clientes nuevos desde 2023-06 (2023-06 a 2024-10) es 57,5.">H17</span> <span class="id" title="El promedio mensual de clientes nuevos varía 73,3% desde 2023-06 frente a antes (2022-03 a 2023-05).">H34</span> <span class="id" title="El promedio mensual de clientes nuevos de 2023 es 54,2.">H32</span> <span class="id" title="El promedio mensual de clientes nuevos de 2024 (enero a octubre) es 55,4.">H33</span> <span class="id" title="El promedio mensual de la suma de ticket_inicial de 2023 es 2,5 M.">H40</span> <span class="id" title="El promedio mensual de la suma de ticket_inicial de 2024 (enero a octubre) es 2,6 M.">H41</span> <span class="id" title="La retencion_cohorte a 6 meses de las cohortes 2022-03 a 2023-05, ponderada por clientes, es 92,4%.">H29</span> <span class="id" title="La retencion_cohorte a 6 meses de las cohortes 2023-06 a 2024-02 (últimas con mes 6 &lt;= 2024-08), ponderada por clientes, es 96,1%.">H30</span> <span class="id" title="El gasto_sm mensual promedio antes de 2023-06 (2022-03 a 2023-05) es 291,4 M.">H20</span> <span class="id" title="El gasto_sm mensual promedio desde 2023-06 (2023-06 a 2024-10) es 175,3 M.">H21</span> <span class="id" title="El gasto_sm mensual promedio varía −39,8% desde 2023-06 frente a antes.">H36</span> <span class="id" title="El promedio mensual de la suma de ticket_inicial antes de 2023-06 es 2,5 M.">H18</span> <span class="id" title="El promedio mensual de la suma de ticket_inicial desde 2023-06 es 2,6 M.">H19</span> <span class="id" title="El promedio mensual de la suma de ticket_inicial varía 2,6% desde 2023-06 frente a antes.">H35</span> <span class="id" title="La mediana de ticket_inicial de los clientes nuevos antes de 2023-06 es 42.000.">H24</span> <span class="id" title="La mediana de ticket_inicial de los clientes nuevos desde 2023-06 es 36.750.">H25</span> <span class="id" title="La mediana de ticket_inicial de los clientes nuevos varía −12,5% desde 2023-06 frente a antes.">H37</span> <span class="id" title="De las 6 industrias, 5 tienen una mediana de ticket_inicial menor desde 2023-06 que antes.">H28</span></p>
+    </section>
+    <section class="kpis">
+      <div class="kpi">
+        <div class="kpi-rotulo">MRR 2024-10</div>
+        <div class="kpi-valor">97,0 M</div>
+        <p class="kpi-nota">El MRR final a 2024-10 es 97,0 M. <span class="etiqueta etiqueta-hecho">hecho · H01</span></p>
+      </div>
+      <div class="kpi">
+        <div class="kpi-rotulo">Clientes nuevos por mes, 2024 (10 meses)</div>
+        <div class="kpi-valor">55,4</div>
+        <p class="kpi-nota">El promedio mensual de clientes nuevos de 2024 (enero a octubre) es 55,4. <span class="etiqueta etiqueta-hecho">hecho · H33</span></p>
+      </div>
+      <div class="kpi">
+        <div class="kpi-rotulo">Mediana de ticket inicial, antes → después</div>
+        <div class="kpi-valor">42.000 → 36.750</div>
+        <p class="kpi-nota">La mediana de ticket_inicial de los clientes nuevos varía −12,5% desde 2023-06 frente a antes. <span class="etiqueta etiqueta-hecho">hecho · H37</span></p>
+      </div>
+      <div class="kpi">
+        <div class="kpi-rotulo">Variación del gasto S&amp;M mensual</div>
+        <div class="kpi-valor">−39,8%</div>
+        <p class="kpi-nota">El gasto_sm mensual promedio varía −39,8% desde 2023-06 frente a antes. <span class="etiqueta etiqueta-hecho">hecho · H36</span></p>
+      </div></section>
+    <section class="tarjeta">
+      <h2>Qué decidir (CRO)</h2>
+      <ol class="decisiones"><li>Poner el foco en el ticket de entrada, no solo en el volumen: la cantidad de clientes nuevos se sostiene y el ticket mediano baja. Revisar precios, descuentos y planes de entrada. La mediana de ticket_inicial de los clientes nuevos varía −12,5% desde 2023-06 frente a antes. <span class="etiqueta etiqueta-hecho">hecho · H37</span> De las 6 industrias, 5 tienen una mediana de ticket_inicial menor desde 2023-06 que antes. <span class="etiqueta etiqueta-hecho">hecho · H28</span> <span class='cita'><span class="etiqueta etiqueta-inferencia">inferencia · H38, H37, H28, P01-H5, P01-H7</span></span></li><li>No atribuir el estancamiento al recorte de gasto S&amp;M ni a una peor retención de las cohortes nuevas: ambas hipótesis quedaron descartadas. El gasto_sm mensual promedio varía −39,8% desde 2023-06 frente a antes. <span class="etiqueta etiqueta-hecho">hecho · H36</span> La retencion_cohorte a 6 meses de las cohortes 2023-06 a 2024-02 (últimas con mes 6 &lt;= 2024-08), ponderada por clientes, es 96,1%. <span class="etiqueta etiqueta-hecho">hecho · H30</span> <span class='cita'><span class="etiqueta etiqueta-inferencia">inferencia · P01-H6, P01-H8, H36, H30</span></span></li><li>Conseguir los datos de funnel para evaluar demanda, calidad de leads, velocidad de atención y conversión post-SQL. Dato a pedir: Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id. <span class='cita'><span class="etiqueta etiqueta-inferencia">inferencia · P01-H1, P01-H2, P01-H3, P01-H4</span></span></li><li>Conseguir el precio de lista para separar descuento de contracción y medir el revenue no capturado. Dato a pedir: Precio de lista o plan por cliente-mes, y registro de descuentos con fecha de inicio y fin. <span class='cita'><span class="etiqueta etiqueta-inferencia">inferencia · P02-H1, H08</span></span></li><li>Confirmar con el negocio la escala de SM_spend antes de leer niveles de gasto o CAC. Nota del veredicto de P01-H6: Descartada en cantidad de clientes nuevos. El CAC incluye self-serve y la escala de SM_spend debe confirmarse con el negocio: citar solo variaciones % (H36). <span class='cita'><span class="etiqueta etiqueta-inferencia">inferencia · P01-H6</span></span></li></ol>
+    </section></section><section class="pestana" id="adquisicion" hidden>
+    <figure class="tarjeta grafico">
+      <h3>Desde 2023-06: clientes nuevos por mes +73,3% y gasto S&amp;M −39,8%</h3>
+      <p class="bajada">El promedio mensual de clientes nuevos de 2023 es 54,2. <span class="etiqueta etiqueta-hecho">hecho · H32</span> El promedio mensual de clientes nuevos de 2024 (enero a octubre) es 55,4. <span class="etiqueta etiqueta-hecho">hecho · H33</span> La escala de SM_spend está pendiente de confirmar: lea la forma del gasto, no su nivel.</p>
+      <div class="lienzo" id="g-adquisicion" role="img" aria-label="Desde 2023-06: clientes nuevos por mes +73,3% y gasto S&amp;M −39,8%"></div>
+      <details><summary>Ver datos</summary>
+        <div class="tabla-scroll"><table><thead><tr><th>Mes</th><th>Clientes nuevos</th><th>gasto_sm</th></tr></thead><tbody><tr><td>2022-03</td><td>30</td><td>230,0 M</td></tr><tr><td>2022-04</td><td>19</td><td>235,1 M</td></tr><tr><td>2022-05</td><td>38</td><td>270,0 M</td></tr><tr><td>2022-06</td><td>33</td><td>235,1 M</td></tr><tr><td>2022-07</td><td>32</td><td>220,0 M</td></tr><tr><td>2022-08</td><td>26</td><td>325,1 M</td></tr><tr><td>2022-09</td><td>17</td><td>350,0 M</td></tr><tr><td>2022-10</td><td>32</td><td>375,2 M</td></tr><tr><td>2022-11</td><td>19</td><td>300,0 M</td></tr><tr><td>2022-12</td><td>26</td><td>325,1 M</td></tr><tr><td>2023-01</td><td>60</td><td>325,1 M</td></tr><tr><td>2023-02</td><td>30</td><td>250,0 M</td></tr><tr><td>2023-03</td><td>38</td><td>290,0 M</td></tr><tr><td>2023-04</td><td>51</td><td>295,1 M</td></tr><tr><td>2023-05</td><td>47</td><td>345,1 M</td></tr><tr><td>2023-06</td><td>46</td><td>180,0 M</td></tr><tr><td>2023-07</td><td>65</td><td>175,1 M</td></tr><tr><td>2023-08</td><td>66</td><td>110,0 M</td></tr><tr><td>2023-09</td><td>56</td><td>125,2 M</td></tr><tr><td>2023-10</td><td>64</td><td>135,1 M</td></tr><tr><td>2023-11</td><td>72</td><td>130,0 M</td></tr><tr><td>2023-12</td><td>55</td><td>150,0 M</td></tr><tr><td>2024-01</td><td>57</td><td>185,1 M</td></tr><tr><td>2024-02</td><td>32</td><td>200,0 M</td></tr><tr><td>2024-03</td><td>43</td><td>175,1 M</td></tr><tr><td>2024-04</td><td>69</td><td>225,1 M</td></tr><tr><td>2024-05</td><td>66</td><td>235,1 M</td></tr><tr><td>2024-06</td><td>84</td><td>200,0 M</td></tr><tr><td>2024-07</td><td>48</td><td>180,0 M</td></tr><tr><td>2024-08</td><td>56</td><td>190,0 M</td></tr><tr><td>2024-09</td><td>49</td><td>185,1 M</td></tr><tr><td>2024-10</td><td>50</td><td>200,0 M</td></tr></tbody></table></div>
+      </details>
+      <figcaption>Fuente: datos/tablas/adquisicion_mes.csv · <span class="id" title="El promedio mensual de clientes nuevos varía 73,3% desde 2023-06 frente a antes (2022-03 a 2023-05).">H34</span> <span class="id" title="El gasto_sm mensual promedio varía −39,8% desde 2023-06 frente a antes.">H36</span> <span class="id" title="El promedio mensual de clientes nuevos de 2023 es 54,2.">H32</span> <span class="id" title="El promedio mensual de clientes nuevos de 2024 (enero a octubre) es 55,4.">H33</span></figcaption>
+    </figure>
+    <figure class="tarjeta grafico">
+      <h3>El ticket inicial mediano baja en 5 de 6 industrias desde 2023-06</h3>
+      <p class="bajada">La mediana de ticket_inicial de los clientes nuevos antes de 2023-06 es 42.000. <span class="etiqueta etiqueta-hecho">hecho · H24</span> La mediana de ticket_inicial de los clientes nuevos desde 2023-06 es 36.750. <span class="etiqueta etiqueta-hecho">hecho · H25</span> La mediana de ticket_inicial de los clientes nuevos varía −12,5% desde 2023-06 frente a antes. <span class="etiqueta etiqueta-hecho">hecho · H37</span></p>
+      <div class="lienzo" id="g-industria" role="img" aria-label="El ticket inicial mediano baja en 5 de 6 industrias desde 2023-06"></div>
+      <details><summary>Ver datos</summary>
+        <div class="tabla-scroll"><table><thead><tr><th>Industria</th><th>Antes de 2023-06</th><th>Desde 2023-06</th></tr></thead><tbody><tr><td>Tecnología</td><td>61.425</td><td>42.000</td></tr><tr><td>Salud</td><td>57.750</td><td>52.500</td></tr><tr><td>Producción</td><td>52.500</td><td>37.800</td></tr><tr><td>Restaurantes</td><td>46.200</td><td>46.200</td></tr><tr><td>Servicios profesionales</td><td>29.400</td><td>25.200</td></tr><tr><td>Retail</td><td>25.725</td><td>23.100</td></tr></tbody></table></div>
+      </details>
+      <figcaption>Fuente: datos/tablas/adquisicion_industria.csv · <span class="id" title="De las 6 industrias, 5 tienen una mediana de ticket_inicial menor desde 2023-06 que antes.">H28</span> <span class="id" title="La mediana de ticket_inicial de los clientes nuevos antes de 2023-06 es 42.000.">H24</span> <span class="id" title="La mediana de ticket_inicial de los clientes nuevos desde 2023-06 es 36.750.">H25</span> <span class="id" title="La mediana de ticket_inicial de los clientes nuevos varía −12,5% desde 2023-06 frente a antes.">H37</span></figcaption>
+    </figure>
+    <figure class="tarjeta grafico">
+      <h3>Las cohortes desde 2023-06 no se pierden antes: retención a 6 meses 92,4% → 96,1%</h3>
+      <p class="bajada">La retencion_cohorte a 6 meses de las cohortes 2022-03 a 2023-05, ponderada por clientes, es 92,4%. <span class="etiqueta etiqueta-hecho">hecho · H29</span> La retencion_cohorte a 6 meses de las cohortes 2023-06 a 2024-02 (últimas con mes 6 &lt;= 2024-08), ponderada por clientes, es 96,1%. <span class="etiqueta etiqueta-hecho">hecho · H30</span> Las cohortes sin dato son las que aún no cumplen el plazo con churn confirmable.</p>
+      <div class="lienzo" id="g-retencion" role="img" aria-label="Las cohortes desde 2023-06 no se pierden antes: retención a 6 meses 92,4% → 96,1%"></div>
+      <details><summary>Ver datos</summary>
+        <div class="tabla-scroll"><table><thead><tr><th>Cohorte</th><th>Retención 3 meses</th><th>Retención 6 meses</th></tr></thead><tbody><tr><td>2022-03</td><td>96,7%</td><td>93,3%</td></tr><tr><td>2022-04</td><td>78,9%</td><td>78,9%</td></tr><tr><td>2022-05</td><td>92,1%</td><td>92,1%</td></tr><tr><td>2022-06</td><td>97,0%</td><td>97,0%</td></tr><tr><td>2022-07</td><td>87,5%</td><td>87,5%</td></tr><tr><td>2022-08</td><td>96,2%</td><td>92,3%</td></tr><tr><td>2022-09</td><td>82,4%</td><td>82,4%</td></tr><tr><td>2022-10</td><td>100,0%</td><td>100,0%</td></tr><tr><td>2022-11</td><td>89,5%</td><td>89,5%</td></tr><tr><td>2022-12</td><td>80,8%</td><td>80,8%</td></tr><tr><td>2023-01</td><td>96,7%</td><td>93,3%</td></tr><tr><td>2023-02</td><td>96,7%</td><td>93,3%</td></tr><tr><td>2023-03</td><td>94,7%</td><td>94,7%</td></tr><tr><td>2023-04</td><td>92,2%</td><td>92,2%</td></tr><tr><td>2023-05</td><td>100,0%</td><td>100,0%</td></tr><tr><td>2023-06</td><td>100,0%</td><td>97,8%</td></tr><tr><td>2023-07</td><td>95,4%</td><td>93,8%</td></tr><tr><td>2023-08</td><td>98,5%</td><td>95,5%</td></tr><tr><td>2023-09</td><td>98,2%</td><td>98,2%</td></tr><tr><td>2023-10</td><td>100,0%</td><td>96,9%</td></tr><tr><td>2023-11</td><td>95,8%</td><td>95,8%</td></tr><tr><td>2023-12</td><td>96,4%</td><td>96,4%</td></tr><tr><td>2024-01</td><td>96,5%</td><td>96,5%</td></tr><tr><td>2024-02</td><td>93,8%</td><td>93,8%</td></tr><tr><td>2024-03</td><td>97,7%</td><td></td></tr><tr><td>2024-04</td><td>95,7%</td><td></td></tr><tr><td>2024-05</td><td>93,9%</td><td></td></tr><tr><td>2024-06</td><td></td><td></td></tr><tr><td>2024-07</td><td></td><td></td></tr><tr><td>2024-08</td><td></td><td></td></tr><tr><td>2024-09</td><td></td><td></td></tr><tr><td>2024-10</td><td></td><td></td></tr></tbody></table></div>
+      </details>
+      <figcaption>Fuente: datos/tablas/retencion_cohortes.csv · <span class="id" title="La retencion_cohorte a 6 meses de las cohortes 2022-03 a 2023-05, ponderada por clientes, es 92,4%.">H29</span> <span class="id" title="La retencion_cohorte a 6 meses de las cohortes 2023-06 a 2024-02 (últimas con mes 6 &lt;= 2024-08), ponderada por clientes, es 96,1%.">H30</span> <span class="id" title="Los clientes que entran después de 2023-06 son de peor calidad: se pierden antes.">P01-H8</span></figcaption>
+    </figure></section><section class="pestana" id="hipotesis" hidden>
+    <section class="tarjeta">
+      <h2>Hipótesis aprobadas y su veredicto</h2>
+      <p class="bajada">Solo hipótesis con estado aprobado. Pase el cursor sobre un id de evidencia para ver la afirmación.</p>
+      <div class="tabla-scroll">
+        <table class="tabla-hipotesis">
+          <thead><tr><th>id</th><th>Hipótesis</th><th>Origen</th><th>Veredicto</th><th>Nota</th><th>Evidencia</th><th>Dato faltante</th></tr></thead>
+          <tbody>
+        <tr>
+          <td class="nowrap"><strong>P01-H1</strong></td>
+          <td>Demanda: el crecimiento se frena porque la demanda real no aumentó; el volumen de leads no subió o subió solo en fuentes que no compran.</td>
+          <td>caso</td>
+          <td><span class="chip chip-neutro">no evaluable</span></td>
+          <td>—</td>
+          <td class="ids">—</td>
+          <td>Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id.</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><strong>P01-H2</strong></td>
+          <td>Calidad: entran más leads, pero de peor calidad, y por eso no se convierten.</td>
+          <td>caso</td>
+          <td><span class="chip chip-neutro">no evaluable</span></td>
+          <td>—</td>
+          <td class="ids">—</td>
+          <td>Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id.</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><strong>P01-H3</strong></td>
+          <td>Velocidad de atención: el equipo tarda más en contactar y mover leads, y los leads se enfrían.</td>
+          <td>caso</td>
+          <td><span class="chip chip-neutro">no evaluable</span></td>
+          <td>—</td>
+          <td class="ids">—</td>
+          <td>Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id.</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><strong>P01-H4</strong></td>
+          <td>Conversión post-SQL: los leads llegan a SQL, pero el tramo AE (Demo, Proposal, Won) cierra menos.</td>
+          <td>caso</td>
+          <td><span class="chip chip-neutro">no evaluable</span></td>
+          <td>—</td>
+          <td class="ids">—</td>
+          <td>Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id.</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><strong>P01-H5</strong></td>
+          <td>Premisa del CRO: los clientes nuevos no crecen; la adquisición está estancada en cantidad y en valor.</td>
+          <td>analista</td>
+          <td><span class="chip chip-aviso">no concluyente</span></td>
+          <td>Creció en cantidad de 2022 a 2023 y desde 2023 está plana en cantidad y valor; para el período reciente, la premisa del CRO se sostiene.</td>
+          <td class="ids"><span class="id" title="El promedio mensual de clientes nuevos antes de 2023-06 (2022-03 a 2023-05) es 33,2.">H16</span> <span class="id" title="El promedio mensual de clientes nuevos desde 2023-06 (2023-06 a 2024-10) es 57,5.">H17</span> <span class="id" title="El promedio mensual de la suma de ticket_inicial antes de 2023-06 es 2,5 M.">H18</span> <span class="id" title="El promedio mensual de la suma de ticket_inicial desde 2023-06 es 2,6 M.">H19</span> <span class="id" title="El promedio mensual de clientes nuevos de 2022-03 a 2022-12 es 27,2.">H31</span> <span class="id" title="El promedio mensual de clientes nuevos de 2023 es 54,2.">H32</span> <span class="id" title="El promedio mensual de clientes nuevos de 2024 (enero a octubre) es 55,4.">H33</span> <span class="id" title="El promedio mensual de la suma de ticket_inicial de 2022-03 a 2022-12 es 2,7 M.">H39</span> <span class="id" title="El promedio mensual de la suma de ticket_inicial de 2023 es 2,5 M.">H40</span> <span class="id" title="El promedio mensual de la suma de ticket_inicial de 2024 (enero a octubre) es 2,6 M.">H41</span></td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><strong>P01-H6</strong></td>
+          <td>El recorte de gasto S&amp;M desde 2023-06 redujo la adquisición.</td>
+          <td>analista</td>
+          <td><span class="chip chip-critico">descartada</span></td>
+          <td>Descartada en cantidad de clientes nuevos. El CAC incluye self-serve y la escala de SM_spend debe confirmarse con el negocio: citar solo variaciones % (H36).</td>
+          <td class="ids"><span class="id" title="El gasto_sm mensual promedio antes de 2023-06 (2022-03 a 2023-05) es 291,4 M.">H20</span> <span class="id" title="El gasto_sm mensual promedio desde 2023-06 (2023-06 a 2024-10) es 175,3 M.">H21</span> <span class="id" title="El promedio mensual de clientes nuevos antes de 2023-06 (2022-03 a 2023-05) es 33,2.">H16</span> <span class="id" title="El promedio mensual de clientes nuevos desde 2023-06 (2023-06 a 2024-10) es 57,5.">H17</span> <span class="id" title="El cac_3m promedio antes de 2023-06 (2022-05 a 2023-05; los dos primeros meses no tienen ventana completa) es 9,5 M.">H22</span> <span class="id" title="El cac_3m promedio desde 2023-06 es 3,3 M.">H23</span></td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><strong>P01-H7</strong></td>
+          <td>Cambio de mix de industria: la adquisición se desplazó hacia industrias que entran con menor ticket, lo que frena el valor nuevo aunque la cantidad se mantenga.</td>
+          <td>analista</td>
+          <td><span class="chip chip-aviso">no concluyente</span></td>
+          <td>—</td>
+          <td class="ids"><span class="id" title="La mediana de ticket_inicial de los clientes nuevos antes de 2023-06 es 42.000.">H24</span> <span class="id" title="La mediana de ticket_inicial de los clientes nuevos desde 2023-06 es 36.750.">H25</span> <span class="id" title="Antes de 2023-06, las industrias cuya mediana de ticket_inicial (antes) está bajo la mediana general (antes) suman el 29,9% de los clientes nuevos.">H26</span> <span class="id" title="Desde 2023-06, esas mismas industrias (mediana de ticket_inicial antes de 2023-06 bajo la mediana general de antes) suman el 33,5% de los clientes nuevos.">H27</span> <span class="id" title="De las 6 industrias, 5 tienen una mediana de ticket_inicial menor desde 2023-06 que antes.">H28</span></td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><strong>P01-H8</strong></td>
+          <td>Los clientes que entran después de 2023-06 son de peor calidad: se pierden antes.</td>
+          <td>analista</td>
+          <td><span class="chip chip-critico">descartada</span></td>
+          <td>—</td>
+          <td class="ids"><span class="id" title="La retencion_cohorte a 6 meses de las cohortes 2022-03 a 2023-05, ponderada por clientes, es 92,4%.">H29</span> <span class="id" title="La retencion_cohorte a 6 meses de las cohortes 2023-06 a 2024-02 (últimas con mes 6 &lt;= 2024-08), ponderada por clientes, es 96,1%.">H30</span></td>
+          <td>—</td>
+        </tr>
+        <tr>
+          <td class="nowrap"><strong>P02-H1</strong></td>
+          <td>La contracción se explica principalmente por descuentos otorgados, no por clientes que reducen su plan.</td>
+          <td>analista</td>
+          <td><span class="chip chip-neutro">no evaluable</span></td>
+          <td>—</td>
+          <td class="ids">—</td>
+          <td>Precio de lista o plan por cliente-mes, y registro de descuentos con fecha de inicio y fin.</td>
+        </tr></tbody>
+        </table>
+      </div>
+    </section></section><section class="pestana" id="mrr" hidden>
+    <section class="tarjeta nota">
+      <h2>Cómo leer el MRR</h2>
+      <ul>
+        <li><strong>Contracción y descuento no se separan.</strong> Con los datos actuales incluye descuentos, porque no se pueden separar.
+            Para separarlos falta el bloque C (diseño): Precio de lista o plan por cliente-mes, y registro de descuentos con fecha de inicio y fin.</li>
+        <li><strong>2024 es no concluyente</strong> por churn truncado. Con la regla de churn de 3 meses, la contracción supera al churn en 2022 y 2023; con la regla de 1 mes ocurre lo contrario, así que la comparación depende de la definición. En 2024 la comparación es no concluyente: el churn está truncado y la salida_pendiente, si termina siendo churn, puede invertir el resultado. Además, una parte de la contracción ocurre el mes siguiente a un retorno de pausa, coherente con pagos atrasados no capturados por monto_recurrente (en ese caso la contracción como componente estaría inflada, con su contrapartida en retorno_pausa), pero también con reducciones reales de plan o pagos parciales. Sin precio de lista no se puede saber qué parte es descuento. <span class="etiqueta etiqueta-inferencia">inferencia · H08</span></li>
+      </ul>
+    </section>
+    <figure class="tarjeta grafico">
+      <h3>El MRR llega a 97,0 M en 2024-10: movimientos del puente por año</h3>
+      <p class="bajada">El MRR final a 2024-10 es 97,0 M. <span class="etiqueta etiqueta-hecho">hecho · H01</span> Valores positivos suman MRR; negativos lo restan.</p>
+      <div class="lienzo" id="g-puente" role="img" aria-label="El MRR llega a 97,0 M en 2024-10: movimientos del puente por año"></div>
+      <details><summary>Ver datos</summary>
+        <div class="tabla-scroll"><table><thead><tr><th>Movimiento</th><th>2022</th><th>2023</th><th>2024 (10 meses)</th></tr></thead><tbody><tr><td>nuevo</td><td>26,5 M</td><td>30,3 M</td><td>25,6 M</td></tr><tr><td>expansion</td><td>12,6 M</td><td>15,0 M</td><td>13,6 M</td></tr><tr><td>contraccion</td><td>−22,7 M</td><td>−21,7 M</td><td>−14,9 M</td></tr><tr><td>salida_pausa</td><td>−22,2 M</td><td>−11,7 M</td><td>−7,7 M</td></tr><tr><td>retorno_pausa</td><td>28,7 M</td><td>14,0 M</td><td>11,0 M</td></tr><tr><td>churn</td><td>−9,5 M</td><td>−14,0 M</td><td>−11,8 M</td></tr><tr><td>reactivacion</td><td>5,9 M</td><td>4,7 M</td><td>6,6 M</td></tr><tr><td>salida_pendiente</td><td>0</td><td>0</td><td>−3,3 M</td></tr></tbody></table></div>
+      </details>
+      <figcaption>Fuente: datos/tablas/puente_mrr.csv (suma anual) · <span class="id" title="El MRR final a 2024-10 es 97,0 M.">H01</span></figcaption>
+    </figure>
+    <figure class="tarjeta grafico">
+      <h3>El churn depende de la regla: en 2022 pasa de −9,5 M (3 meses) a −31,8 M (1 mes)</h3>
+      <p class="bajada">El churn total de 2023 (regla de 3 meses) es −14,0 M. <span class="etiqueta etiqueta-hecho">hecho · H03</span> El churn total de 2023 con la regla de 1 mes (churn_sensibilidad_1m) es −25,7 M. <span class="etiqueta etiqueta-hecho">hecho · H15</span> El churn de 2024 (enero a octubre) con la regla de 3 meses es −11,8 M. <span class="etiqueta etiqueta-hecho">hecho · H04</span> El churn de 2024 (enero a octubre) con la regla de 1 mes (churn_sensibilidad_1m) es −22,8 M. <span class="etiqueta etiqueta-hecho">hecho · H05</span></p>
+      <div class="lienzo" id="g-churn" role="img" aria-label="El churn depende de la regla: en 2022 pasa de −9,5 M (3 meses) a −31,8 M (1 mes)"></div>
+      <details><summary>Ver datos</summary>
+        <div class="tabla-scroll"><table><thead><tr><th>Año</th><th>Churn 3 meses</th><th>Churn 1 mes</th></tr></thead><tbody><tr><td>2022</td><td>−9,5 M</td><td>−31,8 M</td></tr><tr><td>2023</td><td>−14,0 M</td><td>−25,7 M</td></tr><tr><td>2024 (10 meses)</td><td>−11,8 M</td><td>−22,8 M</td></tr></tbody></table></div>
+      </details>
+      <figcaption>Fuente: datos/tablas/puente_mrr.csv y puente_mrr_1m.csv · <span class="id" title="El churn total de 2022 (regla de 3 meses) es −9,5 M.">H11</span> <span class="id" title="El churn total de 2022 con la regla de 1 mes (churn_sensibilidad_1m) es −31,8 M.">H14</span> <span class="id" title="El churn total de 2023 (regla de 3 meses) es −14,0 M.">H03</span> <span class="id" title="El churn total de 2023 con la regla de 1 mes (churn_sensibilidad_1m) es −25,7 M.">H15</span> <span class="id" title="El churn de 2024 (enero a octubre) con la regla de 3 meses es −11,8 M.">H04</span> <span class="id" title="El churn de 2024 (enero a octubre) con la regla de 1 mes (churn_sensibilidad_1m) es −22,8 M.">H05</span></figcaption>
+    </figure>
+    <figure class="tarjeta grafico">
+      <h3>Con churn de 3 meses, la contracción supera al churn en 2022 y 2023; 2024 no es concluyente</h3>
+      <p class="bajada">La contracción total de 2022 es −22,7 M. <span class="etiqueta etiqueta-hecho">hecho · H09</span> La contracción total de 2023 es −21,7 M. <span class="etiqueta etiqueta-hecho">hecho · H02</span> La contracción total de 2024 (enero a octubre) es −14,9 M. <span class="etiqueta etiqueta-hecho">hecho · H10</span> La salida_pendiente de 2024 (MRR en riesgo aún no clasificable como pausa o churn) es −3,3 M. <span class="etiqueta etiqueta-hecho">hecho · H06</span></p>
+      <div class="lienzo" id="g-contraccion" role="img" aria-label="Con churn de 3 meses, la contracción supera al churn en 2022 y 2023; 2024 no es concluyente"></div>
+      <details><summary>Ver datos</summary>
+        <div class="tabla-scroll"><table><thead><tr><th>Año</th><th>contraccion</th><th>churn (3 meses)</th><th>salida_pendiente</th></tr></thead><tbody><tr><td>2022</td><td>−22,7 M</td><td>−9,5 M</td><td>0</td></tr><tr><td>2023</td><td>−21,7 M</td><td>−14,0 M</td><td>0</td></tr><tr><td>2024 (10 meses)</td><td>−14,9 M</td><td>−11,8 M</td><td>−3,3 M</td></tr></tbody></table></div>
+      </details>
+      <figcaption>Fuente: datos/tablas/puente_mrr.csv (suma anual) · <span class="id" title="Con la regla de churn de 3 meses, la contracción supera al churn en 2022 y 2023; con la regla de 1 mes ocurre lo contrario, así que la comparación depende de la definición. En 2024 la comparación es no concluyente: el churn está truncado y la salida_pendiente, si termina siendo churn, puede invertir el resultado. Además, una parte de la contracción ocurre el mes siguiente a un retorno de pausa, coherente con pagos atrasados no capturados por monto_recurrente (en ese caso la contracción como componente estaría inflada, con su contrapartida en retorno_pausa), pero también con reducciones reales de plan o pagos parciales. Sin precio de lista no se puede saber qué parte es descuento.">H08</span> <span class="id" title="La contracción total de 2022 es −22,7 M.">H09</span> <span class="id" title="La contracción total de 2023 es −21,7 M.">H02</span> <span class="id" title="La contracción total de 2024 (enero a octubre) es −14,9 M.">H10</span> <span class="id" title="La salida_pendiente de 2024 (MRR en riesgo aún no clasificable como pausa o churn) es −3,3 M.">H06</span></figcaption>
+    </figure></section><section class="pestana" id="datos" hidden>
+    <section class="tarjeta">
+      <h2>Inconsistencias detectadas y su tratamiento</h2>
+      <div class="tabla-scroll"><table>
+        <thead><tr><th>Tema</th><th>Qué se vio</th><th>Tratamiento</th><th>Dónde</th></tr></thead>
+        <tbody><tr><td><strong>Base inicial (clientes que ya existían al empezar los datos)</strong></td><td>Los datos empiezan en 2022-01. Febrero tiene 108 primeros pagos frente a unos 30 típicos, lo que es coherente con clientes existentes que no pagaron en enero. Supuesto: Marzo 2022 puede incluir clientes preexistentes que no pagaron en enero ni febrero; se acepta como sesgo menor en la primera cohorte.</td><td>Cliente cuyo primer pago es en 2022-01 o 2022-02. Cuenta en MRR y queda excluido de las cohortes de adquisición. Clientes en base_inicial: <strong>485</strong>.</td><td class='nowrap'><code>sql/2_cliente_mes.sql</code></td></tr><tr><td><strong>Pausas frente a churn</strong></td><td>El 70,5% de los huecos tras los cuales el cliente vuelve a pagar dura exactamente 1 mes, patrón coherente con pagos atrasados o fallidos más que con pérdida del cliente. Decisión de negocio, no un hecho de los datos: de 468 huecos tras los cuales el cliente vuelve a pagar, el 83,8% dura 1 o 2 meses. Con 3 meses, la mayoría de las interrupciones cortas no se cuenta como pérdida. Fecharlo en el primer mes en 0 ubica la pérdida de MRR cuando ocurre.</td><td>Pausa: Hueco de 1 o 2 meses consecutivos en 0, tras el cual el cliente vuelve a pagar. Churn: Hueco de 3 o más meses consecutivos en 0. Se fecha en el PRIMER mes en 0. Pendiente: Hueco abierto al final de los datos con menos de 3 meses en 0. Aún no se puede clasificar. Meses en pausa: <strong>454</strong>; meses pendientes: <strong>59</strong>. Advertencia: Algunos huecos de 3+ meses terminan con un pago que cubre los meses adeudados; el churn puede incluir pagadores tardíos.</td><td class='nowrap'><code>sql/2_cliente_mes.sql</code></td></tr><tr><td><strong>Cobros acumulados en meses de entrada o vuelta (cobro_extra)</strong></td><td>En 293 meses de entrada o vuelta el amount es un múltiplo exacto (k &gt;= 2) del mes siguiente: 51 base_inicial, 88 nuevo, 140 retorno_pausa (116 tras un hueco de 1 mes y 24 tras uno de 2) y 14 reactivado. Ese exceso suma el 1,43% del amount total; sin separarlo inflaría MRR, ticket_inicial y la contracción del mes siguiente.</td><td>monto_recurrente: En meses con estado nuevo, base_inicial, retorno_pausa o reactivado, si amount es múltiplo entero k &gt;= 2 del amount del mes siguiente (mes siguiente &gt; 0, tolerancia de 0,01 sobre el monto: |amount − k × siguiente| &lt;= 0,01), monto_recurrente = amount del mes siguiente. En cualquier otro caso, monto_recurrente = amount. cobro_extra = amount − monto_recurrente. Meses con cobro_extra &gt; 0: <strong>293</strong> (1,4% del amount total). Advertencia: Un aumento real de plan que coincida exactamente con un múltiplo se clasificaría como cobro extra.</td><td class='nowrap'><code>sql/2_cliente_mes.sql</code></td></tr><tr><td><strong>Fila vacía en Industry.csv</strong></td><td>Hay filas sin ID ni Industria en el archivo de origen.</td><td>Acción: descartar y reportar. Filas descartadas: <strong>1</strong> (datos/tablas/industria_descartadas.csv).</td><td class='nowrap'><code>sql/1_limpieza.sql</code></td></tr><tr><td><strong>Valores negativos en PayrollExpenses</strong></td><td>Reversos en el gasto de S&M.</td><td>Acción: conservar y marcar (columna tiene_negativo). Meses con algún negativo: <strong>5</strong>. El gasto mensual tiene negativos (reversos) y oscila; la versión móvil es la que se usa para leer tendencias.</td><td class='nowrap'><code>sql/1_limpieza.sql</code></td></tr><tr><td><strong>Escala de SM_spend</strong></td><td>Los valores vienen como texto con "$" y se multiplican por 100.000.000. Con esa escala, el gasto_sm mensual supera al MRR en <strong>34</strong> de 34 meses.</td><td>Pendiente de confirmar con el negocio. Mientras tanto, de gasto y CAC se citan solo variaciones % (P01-H6).</td><td class='nowrap'><code>sql/1_limpieza.sql, reglas/fuentes.yaml</code></td></tr><tr><td><strong>Team frente a PayrollExpenses</strong></td><td>Ambas columnas parecen gasto de personal.</td><td>No hay tratamiento documentado en el repositorio: hoy ambas se suman en gasto_sm (Suma de todas las columnas de S&amp;M del mes.). Posible doble conteo de personal, a confirmar con el negocio.</td><td class='nowrap'><code>sql/1_limpieza.sql</code></td></tr></tbody>
+      </table></div>
+    </section>
+    <section class="tarjeta">
+      <h2>Qué no se puede concluir</h2>
+      <ul><li><strong>P01:</strong> No hay datos de leads ni de etapas; toda conclusión sobre el funnel se infiere desde el resultado (clientes nuevos, ticket, retención, gasto).</li><li><strong>P01:</strong> Si los clientes nuevos crecen &quot;al mismo ritmo que los leads&quot; no es evaluable sin datos de leads (definición lead, en diseño).</li><li><strong>P01:</strong> cac y cac_3m incluyen clientes self-serve; no se puede separar la adquisición asistida por ventas (motion_entrada, en diseño).</li><li><strong>P01:</strong> La escala de SM_spend (× 100.000.000) debe confirmarse con el negocio: el gasto_sm mensual supera al MRR. Mientras tanto, de gasto y CAC se citan solo variaciones %.</li><li><strong>P02:</strong> con monto cobrado únicamente, descuento y contracción no se pueden separar.</li></ul>
+    </section>
+    <section class="tarjeta">
+      <h2>Datos a pedir</h2>
+      <p class="bajada">Métricas en diseño (bloques C y E de reglas/definiciones.yaml): no se calculan hasta tener el dato.</p>
+      <ul><li><strong>C descuentos:</strong> Precio de lista o plan por cliente-mes, y registro de descuentos con fecha de inicio y fin.<br><span class='bajada'>Habilita: mrr_contratado, descuento, mrr_neto, descuento_expirado, revenue_no_capturado</span></li><li><strong>E funnel_comercial:</strong> Tabla de eventos de etapa (lead_id, etapa, fecha_entrada, fecha_salida, fuente, motion, SDR/AE asignado) y vínculo lead_id → cliente_id.<br><span class='bajada'>Habilita: lead, etapas, motion_entrada, alcanzo_etapa, conversion_cohorte, tiempo_en_etapa, estancado, speed_to_lead, win_rate, costo_por_won</span></li></ul>
+    </section>
+    <section class="tarjeta">
+      <h2>Supuestos y advertencias del glosario</h2>
+      <div class="tabla-scroll"><table>
+        <thead><tr><th>Métrica</th><th>Tipo</th><th>Texto</th></tr></thead>
+        <tbody><tr><td><code>base_inicial</code></td><td>supuesto</td><td>Marzo 2022 puede incluir clientes preexistentes que no pagaron en enero ni febrero; se acepta como sesgo menor en la primera cohorte.</td></tr><tr><td><code>cliente_nuevo</code></td><td>advertencia</td><td>Es el primer pago, no el &#x27;Won&#x27; del CRM.</td></tr><tr><td><code>churn</code></td><td>supuesto</td><td>El umbral de 3 meses es una convención; su efecto se mide con churn_sensibilidad_1m.</td></tr><tr><td><code>churn</code></td><td>advertencia</td><td>Algunos huecos de 3+ meses terminan con un pago que cubre los meses adeudados; el churn puede incluir pagadores tardíos.</td></tr><tr><td><code>churn_sensibilidad_1m</code></td><td>advertencia</td><td>No reemplaza a churn; solo se usa como análisis de sensibilidad.</td></tr><tr><td><code>mrr</code></td><td>advertencia</td><td>Es el MRR neto cobrado; no hay precio de lista en los datos.</td></tr><tr><td><code>contraccion</code></td><td>advertencia</td><td>Con los datos actuales incluye descuentos, porque no se pueden separar.</td></tr><tr><td><code>monto_recurrente</code></td><td>advertencia</td><td>Un aumento real de plan que coincida exactamente con un múltiplo se clasificaría como cobro extra.</td></tr><tr><td><code>cac</code></td><td>advertencia</td><td>Incluye clientes self-serve que no consumieron gasto de ventas.</td></tr><tr><td><code>cac_3m</code></td><td>advertencia</td><td>Incluye clientes self-serve que no consumieron gasto de ventas; mismo sesgo que cac.</td></tr></tbody>
+      </table></div>
+    </section></section><section class="pestana" id="como" hidden>
+    <section class="tarjeta">
+      <h2>De la pregunta al tablero</h2>
+      <ol class="diagrama"><li class="paso"><span class="paso-num">1</span><strong>Pregunta</strong>
+        <code>preguntas/PXX.md</code><span>El negocio formula la pregunta y la decisión que habilita.</span></li><li class="paso"><span class="paso-num">2</span><strong>Definiciones</strong>
+        <code>reglas/definiciones.yaml</code><span>21 métricas operativas; las de diseño solo como dato faltante.</span></li><li class="paso"><span class="paso-num">3</span><strong>SQL</strong>
+        <code>sql/</code><span>DuckDB: limpieza (única conversión de unidades), ciclo de vida y tablas por pregunta.</span></li><li class="paso"><span class="paso-num">4</span><strong>Validaciones</strong>
+        <code>validaciones/</code><span>78 pruebas pasaron en la última corrida.</span></li><li class="paso"><span class="paso-num">5</span><strong>Hallazgos</strong>
+        <code>hallazgos/*.yaml</code><span>Cada hecho guarda su consulta y se recalcula en las pruebas.</span></li><li class="paso"><span class="paso-num">6</span><strong>Revisor</strong>
+        <code>preguntas/revision_*.md</code><span>Agente independiente que objeta veredictos e inferencias.</span></li><li class="paso"><span class="paso-num">7</span><strong>Aprobación</strong>
+        <code>estado: aprobado</code><span>Decisión humana: 40 hallazgos y 9 hipótesis aprobados.</span></li><li class="paso"><span class="paso-num">8</span><strong>Tablero</strong>
+        <code>docs/index.html</code><span>Solo muestra lo aprobado; las cifras salen de los CSV y de los hallazgos.</span></li></ol>
+    </section>
+    <section class="tarjeta">
+      <h2>Validaciones</h2>
+      <p>La última corrida de <code>python ejecutar.py</code> pasó <strong>78</strong> pruebas
+         (datos de entrada, cuadre de unidades, definiciones, cifras del glosario, puente de MRR, hallazgos e hipótesis).
+         Después de generar esta página, <code>validaciones/test_tablero.py</code> comprueba que no queden marcadores
+         sin reemplazar ni ids en borrador.</p>
+    </section>
+    <section class="tarjeta">
+      <h2>Cómo entra una pregunta nueva</h2>
+      <p>Se copia <code>preguntas/_plantilla.md</code> y se completan sus campos:</p>
+      <ul><li><strong>Quién pregunta</strong></li><li><strong>Qué decisión habilita</strong></li><li><strong>Subpreguntas</strong></li><li><strong>Definiciones que usa</strong>: (nombres de reglas/definiciones.yaml)</li><li><strong>Datos disponibles</strong></li><li><strong>Datos que faltan</strong></li><li><strong>Hipótesis</strong>: ver hallazgos/hipotesis.yaml (se formulan antes de calcular)</li><li><strong>Plan de análisis</strong>: (lo propone el analista; requiere aprobación)</li><li><strong>Límites</strong>: qué NO se puede concluir</li><li><strong>Revisión</strong>: (lo completa el revisor)</li><li><strong>Estado</strong>: registrada | plan_aprobado | en_analisis | revisada | publicada</li></ul>
+      <p class="bajada">Luego: hipótesis en borrador en hallazgos/hipotesis.yaml → aprobación humana del plan → SQL en
+         sql/preguntas/ → hallazgos con su consulta → revisor → aprobación → tablero.</p>
+    </section></section>
+</div>
+<script id="datos-tablero" type="application/json">{"graficos": {"g-adquisicion": {"trazas": [{"type": "bar", "name": "Clientes nuevos", "x": ["2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10"], "y": [30, 19, 38, 33, 32, 26, 17, 32, 19, 26, 60, 30, 38, 51, 47, 46, 65, 66, 56, 64, 72, 55, 57, 32, 43, 69, 66, 84, 48, 56, 49, 50], "xaxis": "x", "yaxis": "y", "marker": {"color": "var:--serie-1"}, "customdata": ["30", "19", "38", "33", "32", "26", "17", "32", "19", "26", "60", "30", "38", "51", "47", "46", "65", "66", "56", "64", "72", "55", "57", "32", "43", "69", "66", "84", "48", "56", "49", "50"], "hovertemplate": "%{x}<br>Clientes nuevos: %{customdata}<extra><\/extra>"}, {"type": "bar", "name": "gasto_sm (millones)", "x": ["2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10"], "y": [230.0, 235.1, 270.0, 235.1, 220.0, 325.1, 350.0, 375.2, 300.0, 325.1, 325.1, 250.0, 290.0, 295.1, 345.1, 180.0, 175.1, 110.0, 125.2, 135.1, 130.0, 150.0, 185.1, 200.0, 175.1, 225.1, 235.1, 200.0, 180.0, 190.0, 185.1, 200.0], "xaxis": "x", "yaxis": "y2", "marker": {"color": "var:--serie-2"}, "customdata": ["230,0 M", "235,1 M", "270,0 M", "235,1 M", "220,0 M", "325,1 M", "350,0 M", "375,2 M", "300,0 M", "325,1 M", "325,1 M", "250,0 M", "290,0 M", "295,1 M", "345,1 M", "180,0 M", "175,1 M", "110,0 M", "125,2 M", "135,1 M", "130,0 M", "150,0 M", "185,1 M", "200,0 M", "175,1 M", "225,1 M", "235,1 M", "200,0 M", "180,0 M", "190,0 M", "185,1 M", "200,0 M"], "hovertemplate": "%{x}<br>gasto_sm: %{customdata}<extra><\/extra>"}], "layout": {"paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "font": {"family": "system-ui, -apple-system, 'Segoe UI', sans-serif", "size": 12, "color": "var:--tinta-2"}, "separators": ",.", "margin": {"l": 8, "r": 8, "t": 8, "b": 8}, "legend": {"orientation": "h", "x": 0, "y": 1.02, "yanchor": "bottom"}, "hoverlabel": {"bgcolor": "var:--superficie", "bordercolor": "var:--borde", "font": {"color": "var:--tinta-1"}}, "barcornerradius": 4, "bargap": 0.25, "bargroupgap": 0.08, "xaxis": {"title": {"text": "", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "anchor": "y2", "type": "category", "tickangle": -45, "nticks": 12}, "yaxis": {"title": {"text": "Clientes nuevos", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "domain": [0.56, 1]}, "height": 440, "showlegend": true, "hovermode": "x", "yaxis2": {"title": {"text": "gasto_sm (millones)", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "domain": [0, 0.44]}, "shapes": [{"type": "line", "xref": "x", "yref": "paper", "x0": 14.5, "x1": 14.5, "y0": 0, "y1": 1, "line": {"color": "var:--tinta-2", "width": 1.5, "dash": "dot"}}], "annotations": [{"xref": "x", "yref": "paper", "x": 14.5, "y": 1, "xanchor": "left", "yanchor": "top", "text": " desde 2023-06", "showarrow": false, "font": {"color": "var:--tinta-2", "size": 11}}]}}, "g-industria": {"trazas": [{"type": "bar", "name": "Antes de 2023-06", "x": ["Tecnología", "Salud", "Producción", "Restaurantes", "Servicios profesionales", "Retail"], "y": [61425.0, 57750.0, 52500.0, 46200.0, 29400.0, 25725.0], "marker": {"color": "var:--neutro"}, "customdata": ["61.425", "57.750", "52.500", "46.200", "29.400", "25.725"], "hovertemplate": "%{x}<br>Antes de 2023-06: %{customdata}<extra><\/extra>"}, {"type": "bar", "name": "Desde 2023-06", "x": ["Tecnología", "Salud", "Producción", "Restaurantes", "Servicios profesionales", "Retail"], "y": [42000.0, 52500.0, 37800.0, 46200.0, 25200.0, 23100.0], "marker": {"color": "var:--serie-1"}, "customdata": ["42.000", "52.500", "37.800", "46.200", "25.200", "23.100"], "hovertemplate": "%{x}<br>Desde 2023-06: %{customdata}<extra><\/extra>"}], "layout": {"paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "font": {"family": "system-ui, -apple-system, 'Segoe UI', sans-serif", "size": 12, "color": "var:--tinta-2"}, "separators": ",.", "margin": {"l": 8, "r": 8, "t": 8, "b": 8}, "legend": {"orientation": "h", "x": 0, "y": 1.02, "yanchor": "bottom"}, "hoverlabel": {"bgcolor": "var:--superficie", "bordercolor": "var:--borde", "font": {"color": "var:--tinta-1"}}, "barcornerradius": 4, "bargap": 0.25, "bargroupgap": 0.08, "xaxis": {"title": {"text": "", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "type": "category"}, "yaxis": {"title": {"text": "Mediana de ticket_inicial", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "tickformat": ",.0f"}, "height": 360, "barmode": "group"}}, "g-retencion": {"trazas": [{"type": "scatter", "mode": "lines+markers", "name": "Retención a 3 meses", "x": ["2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10"], "y": [96.66666666666669, 78.94736842105263, 92.10526315789474, 96.96969696969695, 87.5, 96.15384615384616, 82.3529411764706, 100.0, 89.47368421052632, 80.76923076923077, 96.66666666666669, 96.66666666666669, 94.73684210526316, 92.15686274509804, 100.0, 100.0, 95.3846153846154, 98.48484848484848, 98.21428571428572, 100.0, 95.83333333333331, 96.36363636363636, 96.49122807017544, 93.75, 97.67441860465117, 95.65217391304348, 93.93939393939394, null, null, null, null, null], "line": {"color": "var:--serie-1", "width": 2, "dash": "solid"}, "marker": {"size": 8, "color": "var:--serie-1"}, "connectgaps": false, "customdata": ["96,7%", "78,9%", "92,1%", "97,0%", "87,5%", "96,2%", "82,4%", "100,0%", "89,5%", "80,8%", "96,7%", "96,7%", "94,7%", "92,2%", "100,0%", "100,0%", "95,4%", "98,5%", "98,2%", "100,0%", "95,8%", "96,4%", "96,5%", "93,8%", "97,7%", "95,7%", "93,9%", "", "", "", "", ""], "hovertemplate": "Retención a 3 meses: %{customdata}<extra><\/extra>"}, {"type": "scatter", "mode": "lines+markers", "name": "Retención a 6 meses", "x": ["2022-03", "2022-04", "2022-05", "2022-06", "2022-07", "2022-08", "2022-09", "2022-10", "2022-11", "2022-12", "2023-01", "2023-02", "2023-03", "2023-04", "2023-05", "2023-06", "2023-07", "2023-08", "2023-09", "2023-10", "2023-11", "2023-12", "2024-01", "2024-02", "2024-03", "2024-04", "2024-05", "2024-06", "2024-07", "2024-08", "2024-09", "2024-10"], "y": [93.33333333333331, 78.94736842105263, 92.10526315789474, 96.96969696969695, 87.5, 92.3076923076923, 82.3529411764706, 100.0, 89.47368421052632, 80.76923076923077, 93.33333333333331, 93.33333333333331, 94.73684210526316, 92.15686274509804, 100.0, 97.82608695652172, 93.84615384615384, 95.45454545454544, 98.21428571428572, 96.875, 95.83333333333331, 96.36363636363636, 96.49122807017544, 93.75, null, null, null, null, null, null, null, null], "line": {"color": "var:--serie-2", "width": 2, "dash": "dash"}, "marker": {"size": 8, "color": "var:--serie-2"}, "connectgaps": false, "customdata": ["93,3%", "78,9%", "92,1%", "97,0%", "87,5%", "92,3%", "82,4%", "100,0%", "89,5%", "80,8%", "93,3%", "93,3%", "94,7%", "92,2%", "100,0%", "97,8%", "93,8%", "95,5%", "98,2%", "96,9%", "95,8%", "96,4%", "96,5%", "93,8%", "", "", "", "", "", "", "", ""], "hovertemplate": "Retención a 6 meses: %{customdata}<extra><\/extra>"}], "layout": {"paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "font": {"family": "system-ui, -apple-system, 'Segoe UI', sans-serif", "size": 12, "color": "var:--tinta-2"}, "separators": ",.", "margin": {"l": 8, "r": 8, "t": 8, "b": 8}, "legend": {"orientation": "h", "x": 0, "y": 1.02, "yanchor": "bottom"}, "hoverlabel": {"bgcolor": "var:--superficie", "bordercolor": "var:--borde", "font": {"color": "var:--tinta-1"}}, "barcornerradius": 4, "bargap": 0.25, "bargroupgap": 0.08, "xaxis": {"title": {"text": "Cohorte (mes de alta)", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "type": "category", "tickangle": -45, "nticks": 12}, "yaxis": {"title": {"text": "% sin churn", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "ticksuffix": "%"}, "height": 360, "hovermode": "x unified"}}, "g-puente": {"trazas": [{"type": "bar", "name": "2022", "x": ["nuevo", "expansion", "contraccion", "salida_pausa", "retorno_pausa", "churn", "reactivacion", "salida_pendiente"], "y": [26.50027527, 12.631244429999999, -22.66387536, -22.22496486, 28.69328364, -9.54903264, 5.88601041, 0.0], "marker": {"color": "var:--serie-1"}, "customdata": ["26,5 M", "12,6 M", "−22,7 M", "−22,2 M", "28,7 M", "−9,5 M", "5,9 M", "0"], "hovertemplate": "%{x}<br>2022: %{customdata}<extra><\/extra>"}, {"type": "bar", "name": "2023", "x": ["nuevo", "expansion", "contraccion", "salida_pausa", "retorno_pausa", "churn", "reactivacion", "salida_pendiente"], "y": [30.28834725, 14.97954045, -21.701150100000003, -11.723730269999999, 14.03977911, -13.964662530000002, 4.68122214, 0.0], "marker": {"color": "var:--serie-2"}, "customdata": ["30,3 M", "15,0 M", "−21,7 M", "−11,7 M", "14,0 M", "−14,0 M", "4,7 M", "0"], "hovertemplate": "%{x}<br>2023: %{customdata}<extra><\/extra>"}, {"type": "bar", "name": "2024 (10 meses)", "x": ["nuevo", "expansion", "contraccion", "salida_pausa", "retorno_pausa", "churn", "reactivacion", "salida_pendiente"], "y": [25.58823498, 13.55621421, -14.88189717, -7.687687769999999, 11.02863762, -11.82189708, 6.588584730000001, -3.2681478900000003], "marker": {"color": "var:--serie-3"}, "customdata": ["25,6 M", "13,6 M", "−14,9 M", "−7,7 M", "11,0 M", "−11,8 M", "6,6 M", "−3,3 M"], "hovertemplate": "%{x}<br>2024 (10 meses): %{customdata}<extra><\/extra>"}], "layout": {"paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "font": {"family": "system-ui, -apple-system, 'Segoe UI', sans-serif", "size": 12, "color": "var:--tinta-2"}, "separators": ",.", "margin": {"l": 8, "r": 8, "t": 8, "b": 8}, "legend": {"orientation": "h", "x": 0, "y": 1.02, "yanchor": "bottom"}, "hoverlabel": {"bgcolor": "var:--superficie", "bordercolor": "var:--borde", "font": {"color": "var:--tinta-1"}}, "barcornerradius": 4, "bargap": 0.25, "bargroupgap": 0.08, "xaxis": {"title": {"text": "", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "type": "category", "tickangle": -30}, "yaxis": {"title": {"text": "MRR (millones)", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "tickformat": ",.0f"}, "height": 400, "barmode": "group"}}, "g-churn": {"trazas": [{"type": "bar", "name": "churn (regla de 3 meses)", "x": ["2022", "2023", "2024 (10 meses)"], "y": [-9.54903264, -13.964662530000002, -11.82189708], "marker": {"color": "var:--serie-1"}, "customdata": ["−9,5 M", "−14,0 M", "−11,8 M"], "hovertemplate": "%{x}<br>churn (regla de 3 meses): %{customdata}<extra><\/extra>"}, {"type": "bar", "name": "churn_sensibilidad_1m (regla de 1 mes)", "x": ["2022", "2023", "2024 (10 meses)"], "y": [-31.7739975, -25.6883928, -22.77773274], "marker": {"color": "var:--serie-2"}, "customdata": ["−31,8 M", "−25,7 M", "−22,8 M"], "hovertemplate": "%{x}<br>churn_sensibilidad_1m (regla de 1 mes): %{customdata}<extra><\/extra>"}], "layout": {"paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "font": {"family": "system-ui, -apple-system, 'Segoe UI', sans-serif", "size": 12, "color": "var:--tinta-2"}, "separators": ",.", "margin": {"l": 8, "r": 8, "t": 8, "b": 8}, "legend": {"orientation": "h", "x": 0, "y": 1.02, "yanchor": "bottom"}, "hoverlabel": {"bgcolor": "var:--superficie", "bordercolor": "var:--borde", "font": {"color": "var:--tinta-1"}}, "barcornerradius": 4, "bargap": 0.25, "bargroupgap": 0.08, "xaxis": {"title": {"text": "", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "type": "category"}, "yaxis": {"title": {"text": "MRR (millones)", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "tickformat": ",.0f"}, "height": 340, "barmode": "group"}}, "g-contraccion": {"trazas": [{"type": "bar", "name": "contraccion", "x": ["2022", "2023", "2024 (10 meses)"], "y": [-22.66387536, -21.701150100000003, -14.88189717], "marker": {"color": "var:--serie-1"}, "customdata": ["−22,7 M", "−21,7 M", "−14,9 M"], "hovertemplate": "%{x}<br>contraccion: %{customdata}<extra><\/extra>"}, {"type": "bar", "name": "churn (3 meses)", "x": ["2022", "2023", "2024 (10 meses)"], "y": [-9.54903264, -13.964662530000002, -11.82189708], "marker": {"color": "var:--serie-2"}, "customdata": ["−9,5 M", "−14,0 M", "−11,8 M"], "hovertemplate": "%{x}<br>churn (3 meses): %{customdata}<extra><\/extra>"}, {"type": "bar", "name": "salida_pendiente", "x": ["2022", "2023", "2024 (10 meses)"], "y": [0.0, 0.0, -3.2681478900000003], "marker": {"color": "var:--serie-3"}, "customdata": ["0", "0", "−3,3 M"], "hovertemplate": "%{x}<br>salida_pendiente: %{customdata}<extra><\/extra>"}], "layout": {"paper_bgcolor": "rgba(0,0,0,0)", "plot_bgcolor": "rgba(0,0,0,0)", "font": {"family": "system-ui, -apple-system, 'Segoe UI', sans-serif", "size": 12, "color": "var:--tinta-2"}, "separators": ",.", "margin": {"l": 8, "r": 8, "t": 8, "b": 8}, "legend": {"orientation": "h", "x": 0, "y": 1.02, "yanchor": "bottom"}, "hoverlabel": {"bgcolor": "var:--superficie", "bordercolor": "var:--borde", "font": {"color": "var:--tinta-1"}}, "barcornerradius": 4, "bargap": 0.25, "bargroupgap": 0.08, "xaxis": {"title": {"text": "", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "type": "category"}, "yaxis": {"title": {"text": "MRR (millones)", "font": {"size": 12}}, "gridcolor": "var:--rejilla", "linecolor": "var:--eje", "zerolinecolor": "var:--eje", "automargin": true, "tickformat": ",.0f"}, "height": 340, "barmode": "group"}}}}</script>
+<script>
+const DATOS = JSON.parse(document.getElementById('datos-tablero').textContent);
+const pintados = new Set();
+
+function resolverColores(objeto, estilo) {
+  if (typeof objeto === 'string') {
+    return objeto.startsWith('var:') ? estilo.getPropertyValue(objeto.slice(4)).trim() : objeto;
+  }
+  if (Array.isArray(objeto)) return objeto.map(v => resolverColores(v, estilo));
+  if (objeto && typeof objeto === 'object') {
+    const copia = {};
+    for (const clave in objeto) copia[clave] = resolverColores(objeto[clave], estilo);
+    return copia;
+  }
+  return objeto;
+}
+
+function pintar(id) {
+  const grafico = DATOS.graficos[id];
+  const nodo = document.getElementById(id);
+  if (!grafico || !nodo || typeof Plotly === 'undefined') return;
+  const estilo = getComputedStyle(document.documentElement);
+  Plotly.react(nodo, resolverColores(grafico.trazas, estilo), resolverColores(grafico.layout, estilo),
+               {displayModeBar: false, responsive: true});
+  pintados.add(id);
+}
+
+function mostrar(nombre) {
+  document.querySelectorAll('nav button').forEach(b => b.setAttribute('aria-selected', b.dataset.pestana === nombre));
+  document.querySelectorAll('.pestana').forEach(s => { s.hidden = s.id !== nombre; });
+  document.querySelectorAll('#' + nombre + ' .lienzo').forEach(n => {
+    if (pintados.has(n.id)) Plotly.Plots.resize(n); else pintar(n.id);
+  });
+  try { localStorage.setItem('pestana', nombre); } catch (e) {}
+}
+
+document.querySelectorAll('nav button').forEach(b => b.addEventListener('click', () => mostrar(b.dataset.pestana)));
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => pintados.forEach(pintar));
+let inicial = 'resumen';
+try { inicial = localStorage.getItem('pestana') || 'resumen'; } catch (e) {}
+mostrar(document.getElementById(inicial) ? inicial : 'resumen');
+</script>
+</body>
+</html>
